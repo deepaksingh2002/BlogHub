@@ -1,26 +1,25 @@
-// src/pages/Home.jsx
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllPosts } from "../features/post/postThunks";
-import {
-  selectAllPosts,
-  selectPostLoading,
+import { 
+  selectAllPosts, 
+  selectPostLoading 
 } from "../features/post/postSlice";
 import { Contaner, PostCard } from "../components";
 
 function Home() {
   const dispatch = useDispatch();
-
+  const hasFetched = useRef(false);
   const posts = useSelector(selectAllPosts);
   const loading = useSelector(selectPostLoading);
-
   const safePosts = Array.isArray(posts) ? posts : [];
 
   useEffect(() => {
-    if (safePosts.length === 0) {
+    if (!hasFetched.current) {
       dispatch(getAllPosts());
+      hasFetched.current = true;
     }
-  }, [dispatch, safePosts.length]);
+  }, [dispatch]);
 
   if (loading) {
     return (
@@ -56,4 +55,4 @@ function Home() {
   );
 }
 
-export default Home;
+export default React.memo(Home);

@@ -6,7 +6,6 @@ const handleError = (error) =>
   error.message ||
   "Something went wrong";
 
-// REGISTER
 export const registerUser = createAsyncThunk(
   "auth/register",
   async (data, { rejectWithValue }) => {
@@ -19,7 +18,6 @@ export const registerUser = createAsyncThunk(
   }
 );
 
-// LOGIN
 export const loginUser = createAsyncThunk(
   "auth/login",
   async (data, { rejectWithValue }) => {
@@ -32,7 +30,6 @@ export const loginUser = createAsyncThunk(
   }
 );
 
-// LOGOUT
 export const logoutUser = createAsyncThunk(
   "auth/logout",
   async (_, { rejectWithValue }) => {
@@ -45,7 +42,6 @@ export const logoutUser = createAsyncThunk(
   }
 );
 
-// CURRENT USER
 export const getCurrentUser = createAsyncThunk(
   "auth/currentUser",
   async (_, { rejectWithValue }) => {
@@ -55,18 +51,16 @@ export const getCurrentUser = createAsyncThunk(
       });
       return res.data;
     } catch (err) {
-      return rejectWithValue(err);
+      return rejectWithValue(handleError(err));
     }
   }
 );
 
-
-// PROFILE
 export const getUserProfile = createAsyncThunk(
   "auth/profile",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await AuthService.profile();
+      const res = await AuthService.getUserProfile();
       return res.data;
     } catch (err) {
       return rejectWithValue(handleError(err));
@@ -74,12 +68,11 @@ export const getUserProfile = createAsyncThunk(
   }
 );
 
-// UPDATE PROFILE
 export const updateUserProfile = createAsyncThunk(
   "auth/updateProfile",
   async (data, { rejectWithValue }) => {
     try {
-      const res = await AuthService.updateProfile(data);
+      const res = await AuthService.updateUserProfile(data);
       return res.data;
     } catch (err) {
       return rejectWithValue(handleError(err));
@@ -87,12 +80,11 @@ export const updateUserProfile = createAsyncThunk(
   }
 );
 
-// UPDATE AVATAR
 export const updateUserAvatar = createAsyncThunk(
   "auth/updateAvatar",
   async (formData, { rejectWithValue }) => {
     try {
-      const res = await AuthService.updateAvatar(formData);
+      const res = await AuthService.updateUserAvatar(formData);
       return res.data;
     } catch (err) {
       return rejectWithValue(handleError(err));
@@ -100,12 +92,11 @@ export const updateUserAvatar = createAsyncThunk(
   }
 );
 
-// CHANGE PASSWORD
 export const changeUserPassword = createAsyncThunk(
   "auth/changePassword",
   async (data, { rejectWithValue }) => {
     try {
-      const res = await AuthService.changePassword(data);
+      const res = await AuthService.changeUserPassword(data);
       return res.data;
     } catch (err) {
       return rejectWithValue(handleError(err));

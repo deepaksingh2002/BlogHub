@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createSelector } from "@reduxjs/toolkit";
 import {
   registerUser,
   loginUser,
@@ -19,7 +19,6 @@ const initialState = {
   authChecked: false, 
 };
 
-
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -29,9 +28,7 @@ const authSlice = createSlice({
       state.message = null;
     },
   },
-
   extraReducers: (builder) => {
-    // REGISTER
     builder
       .addCase(registerUser.pending, (state) => {
         state.loading = true;
@@ -44,10 +41,7 @@ const authSlice = createSlice({
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      });
-
-    // LOGIN
-    builder
+      })
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -61,88 +55,73 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
         state.isAuthenticated = false;
-      });
-
-    // CURRENT USER
-    builder
+      })
       .addCase(getCurrentUser.pending, (state) => {
         state.loading = true;
       })
       .addCase(getCurrentUser.fulfilled, (state, action) => {
-        // console.log("getCurrentUser FULFILLED:", action.payload);
         state.loading = false;
         state.user = action.payload?.user || action.payload;
         state.isAuthenticated = true;
         state.authChecked = true;
       })
       .addCase(getCurrentUser.rejected, (state) => {
-        // console.log("getCurrentUser REJECTED:", action.payload);
         state.loading = false;
         state.user = null;
         state.isAuthenticated = false;
         state.authChecked = true;
-      });
-
-
-    // PROFILE
-    builder
+      })
       .addCase(getUserProfile.fulfilled, (state, action) => {
         state.user = action.payload?.user || state.user;
-      });
-
-    // UPDATE PROFILE
-    builder
+      })
       .addCase(updateUserProfile.fulfilled, (state, action) => {
         state.user = action.payload?.user || state.user;
         state.message = action.payload?.message;
-      });
-
-    // UPDATE AVATAR
-    builder
+      })
       .addCase(updateUserAvatar.fulfilled, (state, action) => {
         state.user = action.payload?.user || state.user;
         state.message = action.payload?.message;
-      });
-
-    // CHANGE PASSWORD
-    builder
+      })
       .addCase(changeUserPassword.fulfilled, (state, action) => {
         state.message = action.payload?.message;
-      });
-
-    // LOGOUT
-    builder
+      })
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
         state.isAuthenticated = false;
       });
-
-
-    builder
-      .addMatcher(
-        (action) => action.type.endsWith("/pending"),
-        (state) => {
-          state.loading = true;
-          state.error = null;
-        }
-      )
-      .addMatcher(
-        (action) => action.type.endsWith("/rejected"),
-        (state, action) => {
-          state.loading = false;
-          state.error = action.payload;
-        }
-      );
   },
 });
 
 export const { clearAuthState } = authSlice.actions;
 export default authSlice.reducer;
 
+// ✅ OPTIMIZED SELECTORS
+export const selectAuthUser = createSelector(
+  [(state) => state.auth.user],
+  (user) => user
+);
 
-export const selectAuthUser = (state) => state.auth.user;
-export const selectAuthLoading = (state) => state.auth.loading;
-export const selectAuthError = (state) => state.auth.error;
-export const selectAuthMessage = (state) => state.auth.message;
-export const selectIsAuthenticated = (state) => state.auth.isAuthenticated;
+export const selectAuthLoading = createSelector(
+  [(state) => state.auth.loading],
+  (loading) => loading
+);
 
+export const selectAuthError = createSelector(
+  [(state) => state.auth.error],
+  (error) => error
+);
+
+export const selectAuthMessage = createSelector(
+  [(state) => state.auth.message],
+  (message) => message
+);
+
+export const selectIsAuthenticated = createSelector(
+  [(state) => state.auth.isAuthenticated],
+  (isAuth) => isAuth
+);
+
+export const selectAuthChecked = createSelector(
+  [(state) => state.auth.authChecked],
+  (checked) => checked
+);

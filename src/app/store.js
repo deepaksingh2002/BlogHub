@@ -7,4 +7,9 @@ export const store = configureStore({
     auth: authReducer,
     post: postReducer
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: false,
+    }),
+  devTools: import.meta.env.NODE_ENV !== "production",
 });

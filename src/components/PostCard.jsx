@@ -9,12 +9,12 @@ const PostCard = memo(function PostCard({ post }) {
     thumbnail,
     createdAt,
     owner,
-    catagry,
+    category, // ✅ Fixed: was catagry
     views
   } = post;
 
   const author = owner?.username || "Unknown Author";
-  const category = catagry || "";
+  const safeCategory = category || ""; // ✅ Fixed
 
   const formatDate = (date) => {
     if (!date) return "";
@@ -54,8 +54,6 @@ const PostCard = memo(function PostCard({ post }) {
       aria-label={`Read post: ${title || "Untitled"}`}
     >
       <article className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 h-full flex flex-col overflow-hidden border border-gray-100">
-        
-        {/* Thumbnail */}
         <div className="w-full mb-4 overflow-hidden rounded-xl aspect-[4/3] bg-gray-100">
           <img
             src={optimizeImageUrl(thumbnail)}
@@ -67,23 +65,20 @@ const PostCard = memo(function PostCard({ post }) {
 
         <div className="flex flex-col flex-grow">
           <div className="flex flex-row justify-between">
-            {/* Category */}
-            {category && (
+            {safeCategory && (
               <span className="mb-2 inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full w-fit">
-                {category}
+                {safeCategory}
               </span>
             )}
-            <span className="mb-2 inline-block  text-gray-500 text-xs font-semibold px-3 py-1 rounded-full w-fit">
-                views: {views}
+            <span className="mb-2 inline-block text-gray-500 text-xs font-semibold px-3 py-1 rounded-full w-fit">
+              views: {views}
             </span>
           </div>
-          {/* Title */}
+          
           <h2 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 flex-grow">
             {truncateText(title)}
           </h2>
-          
 
-          {/* Meta */}
           <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 space-y-1">
             <p>
               <span className="font-semibold">By </span>
@@ -97,7 +92,6 @@ const PostCard = memo(function PostCard({ post }) {
             )}
           </div>
 
-          {/* Read More */}
           <div className="mt-4 flex items-center text-blue-600 group-hover:text-blue-700 text-sm font-semibold">
             Read Post
             <svg

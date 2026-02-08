@@ -8,8 +8,7 @@ export const getAllPosts = createAsyncThunk(
       const response = await postService.getAllPosts(params);
       return response;
     } catch (error) {
-      const errorMessage = error.message || "Failed to fetch posts";
-      return rejectWithValue(errorMessage);
+      return rejectWithValue(error.message || "Failed to fetch posts");
     }
   }
 );
@@ -19,9 +18,9 @@ export const getMyPosts = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const res = await postService.getAllPosts();
-      return res.data.data.posts;
+      return res.data || res;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message);
+      return rejectWithValue(error.message);
     }
   }
 );
@@ -31,29 +30,21 @@ export const getPostById = createAsyncThunk(
   async (postId, { rejectWithValue }) => {
     try {
       const response = await postService.getPostById(postId);
-      return response.data;
+      return response.data || response;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch post"
-      );
+      return rejectWithValue(error.message || "Failed to fetch post");
     }
   }
 );
-
 
 export const searchPosts = createAsyncThunk(
   "posts/searchPosts",
   async (query, { rejectWithValue }) => {
     try {
-      if (!query || typeof query !== "string") {
-        return rejectWithValue("Valid search query is required");
-      }
-
       const response = await postService.searchPosts(query);
       return response;
     } catch (error) {
-      const errorMessage = error.message || "Failed to search posts";
-      return rejectWithValue(errorMessage);
+      return rejectWithValue(error.message || "Failed to search posts");
     }
   }
 );

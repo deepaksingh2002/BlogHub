@@ -5,12 +5,14 @@ const API = import.meta.env.VITE_API_URL;
 const api = axios.create({
   baseURL: `${API}/api/v1/users`,
   withCredentials: true,
+  timeout: 10000,
 });
 
 const refreshApi = axios.create({
   baseURL: `${API}/api/v1/users`,
   withCredentials: true,
 });
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -29,7 +31,6 @@ api.interceptors.response.use(
       !originalRequest._retry
     ) {
       originalRequest._retry = true;
-
       try {
         await refreshApi.post("/refresh-token");
         return api(originalRequest);
@@ -42,7 +43,6 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
 
 export const AuthService = {
   register: (data) => api.post("/register", data),
@@ -59,7 +59,4 @@ export const AuthService = {
   refreshToken: () => api.post("/refresh-token"),
 };
 
-
-
 export default api;
-

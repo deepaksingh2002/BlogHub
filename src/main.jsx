@@ -18,14 +18,11 @@ const router = createBrowserRouter([
     path: "/",
     element: <App />,
     children: [
-      {
-        path: '/',
-        element: <Home />,
-      },
+      { path: '/', element: <Home /> },
       {
         path: "/login",
         element: (
-          <AuthLayout authentication={false} >
+          <AuthLayout authentication={false}>
             <Login />
           </AuthLayout>
         ),
@@ -33,15 +30,12 @@ const router = createBrowserRouter([
       {
         path: "/signup",
         element: (
-          <AuthLayout authentication={false} >
+          <AuthLayout authentication={false}>
             <Signup />
           </AuthLayout>
         ),
       },
-      {
-        path: "/all-post",
-        element: <AllPosts />,
-      },
+      { path: "/all-post", element: <AllPosts /> },
       {
         path: "/add-post",
         element: (
@@ -58,10 +52,7 @@ const router = createBrowserRouter([
           </AuthLayout>
         ),
       },
-      {
-        path: "/post/:postId",
-        element: <Post />,
-      },
+      { path: "/post/:postId", element: <Post /> },
       {
         path: "/profile",
         element: (
@@ -71,8 +62,8 @@ const router = createBrowserRouter([
         ),
       },
     ],
-  },
-])
+  }
+]);
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -80,4 +71,4 @@ createRoot(document.getElementById('root')).render(
       <RouterProvider router={router} />
     </Provider>
   </StrictMode>,
-)
+);

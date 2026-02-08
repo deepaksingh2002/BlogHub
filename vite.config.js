@@ -7,4 +7,17 @@ export default defineConfig({
     react(),
     tailwindcss()
   ],
+  build: {
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-redux', '@reduxjs/toolkit'],
+        }
+      }
+    }
+  },
+  optimizeDeps: {
+    include: ['react-redux', '@reduxjs/toolkit']
+  }
 });

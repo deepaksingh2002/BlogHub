@@ -1,25 +1,22 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import './App.css';
 import { useDispatch, useSelector } from 'react-redux';
 import { getCurrentUser } from "./features/auth/authThunks";
+import { selectAuthChecked } from "./features/auth/authSlice";
 import { Footer, Header } from './components';
 import { Outlet } from 'react-router-dom';
 
 function App() {
   const dispatch = useDispatch();
-  const { authChecked } = useSelector((state) => state.auth);
+  const authChecked = useSelector(selectAuthChecked);
+  const hasCheckedAuth = useRef(false);
 
   useEffect(() => {
-    if (!authChecked) {
+    if (!authChecked && !hasCheckedAuth.current) {
       dispatch(getCurrentUser());
+      hasCheckedAuth.current = true;
     }
-  }, [authChecked, dispatch]);
-
-//   useEffect(() => {
-//   console.log("getCurrentUser fired");
-//   dispatch(getCurrentUser());
-// }, [dispatch]);
-
+  }, [dispatch, authChecked]);
 
   if (!authChecked) {
     return (
@@ -40,4 +37,4 @@ function App() {
   );
 }
 
- export default App;
+export default App;
