@@ -35,7 +35,7 @@ function PostsList() {
   // STATE 1: LOADING 
   if (loading) {
     return (
-      <div className="w-full py-12 flex items-center justify-center min-h-screen">
+      <div className="w-full py-36 flex items-center justify-center min-h-screen">
         <div className="text-center">
           {/* Animated Spinner */}
           <div className="flex justify-center mb-4">
@@ -121,7 +121,7 @@ function PostsList() {
   // EMPTY 
   if (!posts || posts.length === 0) {
     return (
-      <div className="w-full py-12 flex items-center justify-center min-h-screen">
+      <div className="w-full py-36 flex items-center justify-center min-h-screen">
         <div className="w-full max-w-md text-center">
           {/* Empty State Icon */}
           <div className="flex justify-center mb-4">
@@ -179,7 +179,7 @@ function PostsList() {
   // SUCCESS - DISPLAY POSTS
 
   return (
-    <div className="w-full py-8 bg-gray-50">
+    <div className="w-full py-30 bg-gray-50">
       <Contaner>
         {/* Posts Count */}
         <div className="mb-6">

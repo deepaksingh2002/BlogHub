@@ -227,11 +227,18 @@ export default UserProfile;
 //     await dispatch(changeUserPassword(passwordData));
 //     setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
 //   };
-
-//   if (loading && !user) {
-//     return <div className="text-center py-12">Loading...</div>;
-//   }
-
+// if (loading) {
+//   return (
+//     <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-8">
+//       <LoadingAnimation type="pulse" size="xl" color="secondary" />
+//       <LoadingAnimation type="bounce" size="md" />
+//       <div className="text-center">
+//         <h2 className="text-2xl font-bold text-light mb-2">Loading Profile</h2>
+//         <LoadingAnimation type="spinner" size="sm" color="accent" />
+//       </div>
+//     </div>
+//   );
+// }
 //   if (!user) {
 //     return (
 //       <div className="text-center py-12">

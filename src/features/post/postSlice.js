@@ -90,7 +90,6 @@ const postSlice = createSlice({
 export const { clearPostMessage, clearSinglePost, clearAllPosts } = postSlice.actions;
 export default postSlice.reducer;
 
-// ✅ OPTIMIZED SELECTORS
 export const {
   selectAll: selectAllPosts,
   selectById: selectPostById,

@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Define your custom colors using CSS variables */
+/* Define custom colors */
 :root {
   --color-primary: #F26A1B;
   --color-secondary: #3DAEF2;

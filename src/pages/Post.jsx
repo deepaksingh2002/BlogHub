@@ -2,13 +2,19 @@ import React, { useEffect, useCallback } from "react";
 import parse from "html-react-parser";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { getPostById, deletePost } from "../features/post/postThunks";
+import { 
+  getPostById, 
+  deletePost 
+} from "../features/post/postThunks";
 import { 
   selectPostById,
   selectPostLoading,
   selectPostError 
 } from "../features/post/postSlice";
-import { selectAuthUser, selectIsAuthenticated } from "../features/auth/authSlice";
+import { 
+  selectAuthUser, 
+  selectIsAuthenticated 
+} from "../features/auth/authSlice";
 import { Contaner } from "../components";
 
 function Post() {
@@ -26,7 +32,6 @@ function Post() {
                   post?.owner?._id && 
                   post.owner._id === currentUser?._id;
 
-  // Optimized: useCallback prevents recreation
   const fetchPost = useCallback(() => {
     if (!postId) {
       navigate("/");
@@ -41,14 +46,11 @@ function Post() {
 
   const handleDelete = async () => {
     if (!post?._id || !isOwner) return;
-
     if (!window.confirm("Delete this post permanently?")) return;
-
     try {
       await dispatch(deletePost(post._id)).unwrap();
       navigate("/all-post");
     } catch (err) {
-      console.error("Delete failed:", err);
       alert(err?.message || "Delete failed");
     }
   };
@@ -73,124 +75,116 @@ function Post() {
 
   if (loading) {
     return (
-      <article className="py-8 bg-gray-50 min-h-screen">
+      <main className="min-h-screen pt-32 pb-16 bg-gray-50">
         <Contaner>
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-            <p className="mt-2">Loading post...</p>
+          <div className="max-w-3xl mx-auto text-center space-y-12 py-20">
+            <div className="w-20 h-20 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto"></div>
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Loading post...</h1>
           </div>
         </Contaner>
-      </article>
+      </main>
     );
   }
 
   if (error || !post) {
     return (
-      <article className="py-8 bg-gray-50 min-h-screen">
+      <main className="min-h-screen pt-32 pb-16 bg-gray-50">
         <Contaner>
-          <div className="text-center py-8 text-red-500">
-            {error || "Post not found"}
+          <div className="max-w-2xl mx-auto text-center py-20 space-y-8">
+            <div className="w-24 h-24 mx-auto bg-red-50 border-4 border-red-100 rounded-2xl flex items-center justify-center">
+              <svg className="w-12 h-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="space-y-3">
+              <h1 className="text-4xl font-bold text-gray-900">Post Not Found</h1>
+              <p className="text-lg text-gray-600 max-w-md mx-auto">This post doesn't exist or has been removed.</p>
+            </div>
+            <Link to="/all-post" className="inline-block">
+              <button className="bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-3 rounded-xl transition-colors">
+                ← Back to Posts
+              </button>
+            </Link>
           </div>
-          <Link to="/all-post" className="block text-center mt-4">
-            <button className="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 transition">
-              Back to Posts
-            </button>
-          </Link>
         </Contaner>
-      </article>
+      </main>
     );
   }
 
   return (
-    <article className="py-8 bg-gray-50 min-h-screen">
+    <main className="pt-32 pb-16 bg-gray-50">
       <Contaner>
-        {/* Hero Image */}
-        <div className="relative w-full h-[50vh] rounded-2xl overflow-hidden shadow-lg mb-8 bg-gray-200">
-          {post.thumbnail ? (
-            <img 
-              src={post.thumbnail} 
-              alt={post.title}
-              className="w-full h-full object-cover"
-              loading="eager" 
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
-              <span className="text-gray-500 text-lg">No Image</span>
-            </div>
-          )}
+        <article className="max-w-4xl mx-auto">
+          
+          {/* Breadcrumb */}
+          <nav className="text-sm text-gray-500 mb-8 flex items-center gap-2">
+            <Link to="/all-post" className="hover:text-primary transition-colors">Posts</Link>
+            <span>→</span>
+            <span className="font-medium text-gray-900">{post.title}</span>
+          </nav>
 
-          {/* Owner Actions - SAFE */}
+          {/* Category Badge */}
+          <div className="mb-8">
+            <span className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-semibold">
+              {post.category || 'Uncategorized'}
+            </span>
+          </div>
+
+          {/* Title & Meta */}
+          <header className="mb-12">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+              {post.title}
+            </h1>
+            <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500">
+              <span>{formatDate(post.createdAt)}</span>
+              {post.views && <span>• {post.views} views</span>}
+              {post.owner && (
+                <span className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
+                  {post.owner.username}
+                </span>
+              )}
+            </div>
+          </header>
+
+          {/* Owner Actions - Top Right (Screenshot Style) */}
           {isOwner && (
-            <div className="absolute top-4 right-4 flex gap-2 z-10">
+            <div className="flex gap-3 mb-8 absolute top-4 right-4 lg:static lg:mb-8">
               <button
                 onClick={handleEdit}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg"
-                title="Edit post"
+                className="flex items-center gap-2 bg-primary/90 hover:bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium shadow hover:shadow-md transition-all duration-200"
               >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
                 Edit
               </button>
               <button
                 onClick={handleDelete}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg"
-                title="Delete post"
+                className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow hover:shadow-md transition-all duration-200"
               >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
                 Delete
               </button>
             </div>
           )}
-        </div>
-
-        {/* Post Content */}
-        <div className="max-w-4xl mx-auto">
-          <header className="mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">
-              {post.title}
-            </h1>
-            
-            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-6">
-              <span>Category: {post.category || post.catagry || 'Uncategorized'}</span>
-              <span>•</span>
-              <span>Published: {formatDate(post.createdAt)}</span>
-              {post.views && (
-                <>
-                  <span>•</span>
-                  <span>Views: {post.views}</span>
-                </>
-              )}
-            </div>
-
-            {post.owner && (
-              <div className="flex items-center gap-3 text-sm text-gray-600 mb-6">
-                <img 
-                  src={post.owner.avatar} 
-                  alt={post.owner.username}
-                  className="w-10 h-10 rounded-full object-cover"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
-                />
-                <div>
-                  <p className="font-semibold text-gray-900">{post.owner.username}</p>
-                  <p className="text-gray-500">{formatDate(post.updatedAt || post.createdAt)}</p>
-                </div>
-              </div>
-            )}
-          </header>
 
           {/* Content */}
-          <div className="prose prose-lg max-w-none mb-8">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 lg:p-12 mb-12 prose prose-lg max-w-none">
             {parse(post.content || "<p>No content available</p>")}
           </div>
 
           {/* Back Button */}
-          <Link to="/all-post" className="inline-block">
-            <button className="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-8 py-3 rounded-xl text-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl">
+          <div className="text-center">
+            <Link to="/all-post" className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-3 rounded-xl shadow hover:shadow-lg transition-all duration-200">
               ← Back to All Posts
-            </button>
-          </Link>
-        </div>
+            </Link>
+          </div>
+        </article>
       </Contaner>
-    </article>
+    </main>
   );
 }
 

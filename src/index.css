@@ -1,2 +1,25 @@
 @import "./tailwind.css";
 
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes wave {
+  0%, 60%, 100% { 
+    transform: initial; 
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+  30% { 
+    transform: translateY(-12px); 
+    animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+}
+
+.animate-wave {
+  animation: wave 1.4s infinite ease-in-out;
+}

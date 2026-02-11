@@ -13,6 +13,7 @@ import PostForm from './PostForm/PostForm';
 import PostCard from './PostCard';
 import AuthLayout from './AuthLayout';
 import Profile from "../pages/Profile";
+import LoadingAnimation from "./Animation/LoadingAnimation";
 
 export {
     Header,
@@ -29,5 +30,6 @@ export {
     PostForm,
     PostCard,
     AuthLayout,
-    Profile
+    Profile,
+    LoadingAnimation
 }
