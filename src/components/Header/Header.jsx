@@ -1,59 +1,59 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Logo, Contaner, LogoutBtn } from "../index";
 import { Link, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { selectIsAuthenticated, selectAuthUser } from '../../features/auth/authSlice';
+import { useDispatch, useSelector } from "react-redux";  // ✅ ADD useDispatch
 import { 
-  HiOutlineBars3,
-  HiMagnifyingGlass,
-  HiXMark 
-} from 'react-icons/hi2';
+  selectIsAuthenticated, 
+  selectAuthUser 
+} from '../../features/auth/authSlice';
+import { 
+  searchPosts  // ✅ ADD searchPosts thunk
+} from '../../features/post/postThunks';
+import { HiOutlineBars3, HiMagnifyingGlass, HiXMark } from 'react-icons/hi2';
 
 function Header() {
+  const dispatch = useDispatch();  // ✅ Redux dispatch
   const navigate = useNavigate();
   const authStatus = useSelector(selectIsAuthenticated);
   const user = useSelector(selectAuthUser);
   const avatar = user?.avatar;
+  
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searching, setSearching] = useState(false);  // ✅ Loading state
   const menuRef = useRef(null);
 
   const navItems = [
-    {
-      name: "Home",
-      slug: "/",
-      active: true,
-    },
-    {
-      name: "Login",
-      slug: "/login",
-      active: !authStatus,
-    },
-    {
-      name: "Signup",
-      slug: "/signup",
-      active: !authStatus,
-    },
-    {
-      name: "All Posts",
-      slug: "/all-post",
-      active: authStatus,
-    },
-    {
-      name: "Add Post",
-      slug: "/add-post",
-      active: authStatus,
-    },
+    { name: "Home", slug: "/", active: true },
+    { name: "Login", slug: "/login", active: !authStatus },
+    { name: "Signup", slug: "/signup", active: !authStatus },
+    { name: "All Posts", slug: "/all-post", active: true },
+    { name: "Add Post", slug: "/add-post", active: authStatus },
+    { name: "Profile", slug: "/profile", active: authStatus },
   ];
 
   const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-      setSearchQuery('');
+  // ✅ FIXED: Search with Redux API
+  const handleSearch = useCallback(async () => {
+    const query = searchQuery.trim();
+    if (!query) return;
+
+    setSearching(true);
+    try {
+      // Dispatch search thunk - updates posts in Redux
+      await dispatch(searchPosts(query)).unwrap();
+      
+      // Navigate to search results page
+      navigate(`/search?q=${encodeURIComponent(query)}`);
+    } catch (error) {
+      console.error("Search failed:", error);
+      alert("Search failed. Please try again.");
+    } finally {
+      setSearching(false);
+      setSearchQuery('');  // Clear input
     }
-  };
+  }, [searchQuery, dispatch, navigate]);
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
@@ -61,13 +61,8 @@ function Header() {
     }
   };
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
-  const closeMenu = () => {
-    setIsMenuOpen(false);
-  };
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const closeMenu = () => setIsMenuOpen(false);
 
   // Close menu on outside click
   useEffect(() => {
@@ -76,11 +71,8 @@ function Header() {
         closeMenu();
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   return (
@@ -88,10 +80,11 @@ function Header() {
       <Contaner>
         {/* Desktop Layout */}
         <div className="hidden sm:flex items-center justify-between gap-4">
-          <Link to="/" className="flex-shrink-0 border-2 border-white px-4 py-2 rounded-xl hover:bg-white hover:scale-[1.02] transition-all">
+          <Link to="/" className="flex-shrink-0 border-2 border-white rounded-t-full">
             <Logo width="40px" />
           </Link>
 
+          {/* ✅ Search Bar - Connected to Redux */}
           <div className="flex-1 max-w-md mx-4">
             <div className="relative flex w-full">
               <input
@@ -100,14 +93,22 @@ function Header() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Search posts..."
-                className="flex-1 pl-4 pr-12 py-2.5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 focus:border-white focus:outline-none focus:bg-white/20 transition-all text-white placeholder-gray-300"
+                disabled={searching}
+                className={`flex-1 pl-4 pr-12 py-2.5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 focus:border-white focus:outline-none focus:bg-white/20 transition-all text-white placeholder-gray-300 ${
+                  searching ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               />
               <button
                 onClick={handleSearch}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-lg hover:bg-white/20 transition-all"
+                disabled={searching || !searchQuery.trim()}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-lg hover:bg-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 type="button"
               >
-                <HiMagnifyingGlass className="w-5 h-5" />
+                {searching ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <HiMagnifyingGlass className="w-5 h-5" />
+                )}
               </button>
             </div>
           </div>
@@ -150,6 +151,7 @@ function Header() {
             <Logo width="36px" />
           </Link>
 
+          {/* Mobile Search */}
           <div className="flex-1 max-w-xs mx-2">
             <div className="relative flex w-full">
               <input
@@ -158,14 +160,22 @@ function Header() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Search..."
-                className="flex-1 pl-4 pr-10 py-2 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 focus:border-white focus:outline-none focus:bg-white/20 transition-all text-white placeholder-gray-300 text-sm"
+                disabled={searching}
+                className={`flex-1 pl-4 pr-10 py-2 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 focus:border-white focus:outline-none focus:bg-white/20 transition-all text-white placeholder-gray-300 text-sm ${
+                  searching ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               />
               <button
                 onClick={handleSearch}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded hover:bg-white/20 transition-all"
+                disabled={searching || !searchQuery.trim()}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded hover:bg-white/20 transition-all disabled:opacity-50"
                 type="button"
               >
-                <HiMagnifyingGlass className="w-4 h-4" />
+                {searching ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <HiMagnifyingGlass className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
@@ -180,7 +190,7 @@ function Header() {
         </div>
       </Contaner>
 
-      {/* Mobile Menu - Right Side Vertical */}
+      {/* Mobile Menu */}
       {isMenuOpen && (
         <div 
           ref={menuRef}
