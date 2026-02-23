@@ -106,3 +106,7 @@ The frontend expects backend endpoints under:
 - `${VITE_API_URL}/api/v1/post`
 
 Make sure your backend CORS and cookie settings allow frontend origin + credentials.
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](./LICENSE).
