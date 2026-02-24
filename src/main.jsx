@@ -7,6 +7,7 @@ import Post from './pages/Post.jsx';
 import AddPost from './pages/AddPost.jsx';
 import EditPost from './pages/EditPost.jsx';
 import Profile from './pages/Profile.jsx';
+import Search from './pages/Search.jsx';
 import { Provider } from 'react-redux';
 import { store } from './app/store.js';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
@@ -61,6 +62,7 @@ const router = createBrowserRouter([
           </AuthLayout>
         ),
       },
+      { path: "/search", element: <Search /> },
     ],
   }
 ]);
