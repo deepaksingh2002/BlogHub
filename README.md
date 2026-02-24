@@ -9,6 +9,7 @@ This app supports user authentication, post creation/editing, profile management
 - User authentication (signup, login, logout)
 - Protected routes for authenticated pages
 - Create, edit, delete, and view blog posts
+- Like/unlike posts with authenticated sessions
 - Rich text editor for post content (TinyMCE)
 - User profile and avatar update flows
 - Search posts from the header
@@ -86,7 +87,7 @@ src/
 
 - Requests use `withCredentials: true` for cookie-based sessions.
 - On `401`, auth and post APIs attempt token refresh and retry automatically.
-- If refresh fails, the app redirects users to `/login`.
+- If refresh fails, protected routes redirect users to `/login` via route guards.
 
 ## Build and Deployment
 
@@ -104,6 +105,13 @@ The frontend expects backend endpoints under:
 
 - `${VITE_API_URL}/api/v1/users`
 - `${VITE_API_URL}/api/v1/post`
+- `${VITE_API_URL}/api/v1/like`
+
+Like routes used by frontend:
+
+- `POST /api/v1/like/toggle/post/:postId`
+- `POST /api/v1/like/toggle/comment/:commentId`
+- `GET /api/v1/like/liked/posts`
 
 Make sure your backend CORS and cookie settings allow frontend origin + credentials.
 

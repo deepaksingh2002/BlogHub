@@ -7,7 +7,8 @@ export default function Protected({ children, authentication = true }) {
   const { isAuthenticated, authChecked } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (!authChecked) return;
+    // For protected routes, wait until auth bootstrap is complete.
+    if (authentication && !authChecked) return;
 
     if (authentication && !isAuthenticated) {
       navigate("/login");
@@ -17,7 +18,9 @@ export default function Protected({ children, authentication = true }) {
     }
   }, [authentication, isAuthenticated, authChecked, navigate]);
 
-  if (!authChecked) return <h1>Loading...</h1>;
+  if (authentication && !authChecked) {
+    return <h1>Loading...</h1>;
+  }
 
   return <>{children}</>;
 }

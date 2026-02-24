@@ -18,14 +18,6 @@ function App() {
     }
   }, [dispatch, authChecked]);
 
-  if (!authChecked) {
-    return (
-      <div className="h-screen flex items-center justify-center text-xl">
-        Loading...
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex flex-col bg-light">
       <Header />

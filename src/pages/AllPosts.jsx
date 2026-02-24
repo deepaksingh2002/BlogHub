@@ -1,12 +1,13 @@
 import React, { useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getAllPosts} from "../features/post/postThunks";
+import { getAllPosts, togglePostLike } from "../features/post/postThunks";
 import {
   selectAllPosts,
   selectPostLoading,
   selectPostError,
 } from "../features/post/postSlice";
 import { Contaner, PostCard } from "../components";
+import { selectIsAuthenticated } from "../features/auth/authSlice";
 
 function PostsList() {
   const dispatch = useDispatch();
@@ -14,6 +15,7 @@ function PostsList() {
   const posts = useSelector(selectAllPosts);
   const loading = useSelector(selectPostLoading);
   const error = useSelector(selectPostError);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
 
   const handleFetchPosts = useCallback(() => {
     dispatch(getAllPosts());
@@ -24,6 +26,11 @@ function PostsList() {
   const handleRetry = useCallback(() => {
     handleFetchPosts();
   }, [handleFetchPosts]);
+
+  const handleLike = useCallback((postId) => {
+    if (!isAuthenticated) return;
+    dispatch(togglePostLike(postId));
+  }, [dispatch, isAuthenticated]);
 
  // LIFECYCLE - FETCH POSTS ON MOUNT
   useEffect(() => {
@@ -195,7 +202,12 @@ function PostsList() {
               key={post._id}
               className="h-full"
             >
-              <PostCard post={post} />
+              <PostCard
+                post={post}
+                onLike={handleLike}
+                likes={post?.likesCount ?? (Array.isArray(post?.likes) ? post.likes.length : Number(post?.likes) || 0)}
+                liked={Boolean(post?.isLiked ?? post?.liked ?? post?.likedByCurrentUser)}
+              />
             </div>
           ))}
         </div>

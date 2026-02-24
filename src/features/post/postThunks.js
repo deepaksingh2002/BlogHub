@@ -1,5 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { postService } from "./postApi";
+import { likeService, postService } from "./postApi";
 
 export const getAllPosts = createAsyncThunk(
   "posts/getAllPosts",
@@ -79,6 +79,30 @@ export const deletePost = createAsyncThunk(
       return postId;
     } catch (err) {
       return rejectWithValue(err);
+    }
+  }
+);
+
+export const togglePostLike = createAsyncThunk(
+  "post/toggleLike",
+  async (postId, { rejectWithValue }) => {
+    try {
+      const response = await likeService.togglePostLike(postId);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.message || "Failed to toggle like");
+    }
+  }
+);
+
+export const getLikedPosts = createAsyncThunk(
+  "post/getLikedPosts",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await likeService.getLikedPosts();
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.message || "Failed to fetch liked posts");
     }
   }
 );

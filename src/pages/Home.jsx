@@ -1,18 +1,20 @@
 import React, { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getAllPosts } from "../features/post/postThunks";
+import { getAllPosts, togglePostLike } from "../features/post/postThunks";
 import { Link } from "react-router-dom";
 import { 
   selectAllPosts, 
   selectPostLoading 
 } from "../features/post/postSlice";
 import { Contaner, PostCard, LoadingAnimation, Logo } from "../components";
+import { selectIsAuthenticated } from "../features/auth/authSlice";
 
 function Home() {
   const dispatch = useDispatch();
   const hasFetched = useRef(false);
   const posts = useSelector(selectAllPosts);
   const loading = useSelector(selectPostLoading);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
   
   // Show only FIRST 4 posts in ONE ROW
   const featuredPosts = Array.isArray(posts) ? posts.slice(0, 4) : [];
@@ -23,6 +25,11 @@ function Home() {
       hasFetched.current = true;
     }
   }, [dispatch]);
+
+  const handleLike = (postId) => {
+    if (!isAuthenticated) return;
+    dispatch(togglePostLike(postId));
+  };
 
   // Smooth animations - single color focus
   useEffect(() => {
@@ -121,7 +128,12 @@ function Home() {
               className="animate-slide-up group hover:scale-[1.02] transition-transform duration-300"
               style={{ animationDelay: `${index * 0.15}s` }}
             >
-              <PostCard post={post} />
+              <PostCard
+                post={post}
+                onLike={handleLike}
+                likes={post?.likesCount ?? (Array.isArray(post?.likes) ? post.likes.length : Number(post?.likes) || 0)}
+                liked={Boolean(post?.isLiked ?? post?.liked ?? post?.likedByCurrentUser)}
+              />
             </div>
           ))}
         </div>

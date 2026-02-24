@@ -47,7 +47,8 @@ export const getCurrentUser = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       // Allow interceptor-driven refresh so sessions survive reload/reopen.
-      const res = await AuthService.currentUser();
+      // Keep bootstrap fast on slow networks.
+      const res = await AuthService.currentUser({ timeout: 6000 });
       return res.data;
     } catch (err) {
       return rejectWithValue(handleError(err));

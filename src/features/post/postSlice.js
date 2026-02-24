@@ -7,6 +7,8 @@ import {
   updatePost,
   deletePost,
   searchPosts,
+  togglePostLike,
+  getLikedPosts,
 } from "./postThunks";
 
 const postAdapter = createEntityAdapter({
@@ -24,6 +26,37 @@ const initialState = postAdapter.getInitialState({
     totalPages: 0,
   },
 });
+
+const extractLikeState = (payload = {}) => {
+  const base = payload?.data || payload;
+  const postLike = base?.post || base?.likedPost || base;
+
+  const postId =
+    postLike?.postId ||
+    postLike?._id ||
+    base?.postId ||
+    null;
+
+  const likesCountRaw =
+    postLike?.likesCount ??
+    postLike?.likeCount ??
+    base?.likesCount ??
+    (Array.isArray(postLike?.likes) ? postLike.likes.length : postLike?.likes);
+
+  const likedRaw =
+    postLike?.isLiked ??
+    postLike?.liked ??
+    postLike?.hasLiked ??
+    postLike?.likedByCurrentUser ??
+    base?.isLiked ??
+    base?.liked;
+
+  return {
+    postId,
+    likesCount: Number.isFinite(likesCountRaw) ? likesCountRaw : undefined,
+    isLiked: typeof likedRaw === "boolean" ? likedRaw : undefined,
+  };
+};
 
 const postSlice = createSlice({
   name: "post",
@@ -83,6 +116,35 @@ const postSlice = createSlice({
         state.loading = false;
         postAdapter.removeOne(state, action.payload);
         state.message = "Post deleted successfully";
+      })
+      .addCase(togglePostLike.fulfilled, (state, action) => {
+        const fallbackPostId = action.meta.arg;
+        const { postId, likesCount, isLiked } = extractLikeState(action.payload);
+        const targetPostId = postId || fallbackPostId;
+
+        if (!targetPostId || !state.entities[targetPostId]) return;
+
+        const changes = {};
+        if (typeof likesCount === "number") changes.likesCount = likesCount;
+        if (typeof isLiked === "boolean") changes.isLiked = isLiked;
+
+        if (Object.keys(changes).length > 0) {
+          postAdapter.updateOne(state, {
+            id: targetPostId,
+            changes,
+          });
+        }
+      })
+      .addCase(getLikedPosts.fulfilled, (state, action) => {
+        const payload = action.payload?.data || action.payload || [];
+        const likedPosts = Array.isArray(payload) ? payload : payload?.posts || [];
+        likedPosts.forEach((post) => {
+          if (!post?._id) return;
+          postAdapter.upsertOne(state, {
+            ...post,
+            isLiked: true,
+          });
+        });
       });
   },
 });

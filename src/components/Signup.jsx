@@ -35,13 +35,15 @@ function Signup() {
 
     try {
       const signupData = {
-        fullName: data.name,
-        email: data.email,
-        password: data.password,
+        fullName: data.name.trim(),
+        email: data.email.trim(),
+        password: data.password.trim(),
       };
 
       //Register user
-      await dispatch(registerUser(signupData)).unwrap();
+      const user = await dispatch(registerUser(signupData)).unwrap();
+      console.log("REGESTER:: ",user);
+
 
       // Auto-login
       await dispatch(

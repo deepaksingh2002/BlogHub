@@ -11,6 +11,7 @@ const api = axios.create({
 const refreshApi = axios.create({
   baseURL: `${API}/api/v1/users`,
   withCredentials: true,
+  timeout: 6000,
 });
 
 api.interceptors.response.use(
