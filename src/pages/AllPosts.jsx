@@ -1,13 +1,12 @@
 import React, { useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getAllPosts, togglePostLike } from "../features/post/postThunks";
+import { getAllPosts } from "../features/post/postThunks";
 import {
   selectAllPosts,
   selectPostLoading,
   selectPostError,
 } from "../features/post/postSlice";
-import { Contaner, PostCard } from "../components";
-import { selectIsAuthenticated } from "../features/auth/authSlice";
+import { Contaner, PostListCard } from "../components";
 
 function PostsList() {
   const dispatch = useDispatch();
@@ -15,7 +14,6 @@ function PostsList() {
   const posts = useSelector(selectAllPosts);
   const loading = useSelector(selectPostLoading);
   const error = useSelector(selectPostError);
-  const isAuthenticated = useSelector(selectIsAuthenticated);
 
   const handleFetchPosts = useCallback(() => {
     dispatch(getAllPosts());
@@ -27,11 +25,6 @@ function PostsList() {
     handleFetchPosts();
   }, [handleFetchPosts]);
 
-  const handleLike = useCallback((postId) => {
-    if (!isAuthenticated) return;
-    dispatch(togglePostLike(postId));
-  }, [dispatch, isAuthenticated]);
-
  // LIFECYCLE - FETCH POSTS ON MOUNT
   useEffect(() => {
     handleFetchPosts();
@@ -42,7 +35,7 @@ function PostsList() {
   // STATE 1: LOADING 
   if (loading) {
     return (
-      <div className="w-full py-36 flex items-center justify-center min-h-screen">
+      <div className="w-full py-36 flex items-center justify-center min-h-screen bg-white dark:bg-slate-900">
         <div className="text-center">
           {/* Animated Spinner */}
           <div className="flex justify-center mb-4">
@@ -50,10 +43,10 @@ function PostsList() {
           </div>
 
           {/* Loading Message */}
-          <h1 className="text-lg font-semibold text-gray-700">
+          <h1 className="text-lg font-semibold text-gray-700 dark:text-slate-100">
             Loading posts...
           </h1>
-          <p className="text-gray-500 text-sm mt-2">Please wait</p>
+          <p className="text-gray-500 text-sm mt-2 dark:text-slate-400">Please wait</p>
         </div>
       </div>
     );
@@ -62,7 +55,7 @@ function PostsList() {
  
   if (error) {
     return (
-      <div className="w-full py-12 flex items-center justify-center min-h-screen">
+      <div className="w-full py-12 flex items-center justify-center min-h-screen bg-white dark:bg-slate-900">
         <div className="w-full max-w-md">
           {/* Error Container */}
           <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-6 shadow-sm">
@@ -128,7 +121,7 @@ function PostsList() {
   // EMPTY 
   if (!posts || posts.length === 0) {
     return (
-      <div className="w-full py-36 flex items-center justify-center min-h-screen">
+      <div className="w-full py-36 flex items-center justify-center min-h-screen bg-white dark:bg-slate-900">
         <div className="w-full max-w-md text-center">
           {/* Empty State Icon */}
           <div className="flex justify-center mb-4">
@@ -149,10 +142,10 @@ function PostsList() {
           </div>
 
           {/* Empty State Text */}
-          <p className="text-gray-700 text-lg font-semibold">
+          <p className="text-gray-700 text-lg font-semibold dark:text-slate-100">
             No posts found
           </p>
-          <p className="text-gray-500 text-sm mt-2">
+          <p className="text-gray-500 text-sm mt-2 dark:text-slate-400">
             Check back later for new content
           </p>
 
@@ -186,30 +179,19 @@ function PostsList() {
   // SUCCESS - DISPLAY POSTS
 
   return (
-    <div className="w-full py-30 bg-gray-50">
+    <div className="w-full pt-32 pb-20 bg-[#f4f4f5] dark:bg-slate-900">
       <Contaner>
-        {/* Posts Count */}
-        <div className="mb-6">
-          <p className="text-gray-600 text-sm">
-            Showing {posts.length} post{posts.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-
-        {/* Posts Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="max-w-6xl mx-auto">
+          <div>
           {posts.map((post) => (
             <div
               key={post._id}
               className="h-full"
             >
-              <PostCard
-                post={post}
-                onLike={handleLike}
-                likes={post?.likesCount ?? (Array.isArray(post?.likes) ? post.likes.length : Number(post?.likes) || 0)}
-                liked={Boolean(post?.isLiked ?? post?.liked ?? post?.likedByCurrentUser)}
-              />
+              <PostListCard post={post} />
             </div>
           ))}
+          </div>
         </div>
       </Contaner>
     </div>
