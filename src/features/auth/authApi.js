@@ -35,7 +35,6 @@ api.interceptors.response.use(
         await refreshApi.post("/refresh-token");
         return api(originalRequest);
       } catch (err) {
-        window.location.replace("/login");
         return Promise.reject(err);
       }
     }

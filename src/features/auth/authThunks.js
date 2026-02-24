@@ -46,9 +46,8 @@ export const getCurrentUser = createAsyncThunk(
   "auth/currentUser",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await AuthService.currentUser({
-        skipAuthRefresh: true, 
-      });
+      // Allow interceptor-driven refresh so sessions survive reload/reopen.
+      const res = await AuthService.currentUser();
       return res.data;
     } catch (err) {
       return rejectWithValue(handleError(err));
