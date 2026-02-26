@@ -23,6 +23,12 @@ import {
 } from "../features/auth/authSlice";
 import { Contaner } from "../components";
 
+const getUserId = (user) =>
+  user?._id || user?.id || user?.userId || null;
+
+const getUserName = (user, fallback = "Unknown User") =>
+  user?.username || user?.fullName || user?.name || fallback;
+
 function Post() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -33,21 +39,40 @@ function Post() {
   const error = useSelector(selectPostError);
   const currentUser = useSelector(selectAuthUser);
   const isAuthenticated = useSelector(selectIsAuthenticated);
+  const currentUserId = getUserId(currentUser);
 
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingText, setEditingText] = useState("");
+  const [postRequestDone, setPostRequestDone] = useState(false);
+  const [postRequestLoading, setPostRequestLoading] = useState(true);
+  const [isLikeSubmitting, setIsLikeSubmitting] = useState(false);
+  const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
+  const [actionError, setActionError] = useState("");
 
   const isOwner =
     isAuthenticated &&
-    post?.owner?._id &&
-    post.owner._id === currentUser?._id;
+    getUserId(post?.owner || post?.author) &&
+    getUserId(post?.owner || post?.author) === currentUserId;
 
   const likesCount =
     post?.likesCount ??
     (Array.isArray(post?.likes) ? post.likes.length : Number(post?.likes) || 0);
-  const isLiked = Boolean(post?.isLiked ?? post?.liked ?? post?.likedByCurrentUser);
+  const isLiked = Boolean(
+    post?.isLiked ??
+      post?.liked ??
+      post?.likedByCurrentUser ??
+      (Array.isArray(post?.likes) && currentUserId
+        ? post.likes.some((like) => {
+            const likeId =
+              typeof like === "string"
+                ? like
+                : like?._id || like?.id || like?.userId || like?.owner?._id;
+            return likeId === currentUserId;
+          })
+        : false)
+  );
 
   const formatDate = (date) => {
     if (!date) return "";
@@ -77,9 +102,15 @@ function Post() {
     return list.map((comment, index) => ({
       id: comment?._id || comment?.id || `server-${index}`,
       content: comment?.content || comment?.text || "",
+      authorId:
+        comment?.owner?._id ||
+        comment?.owner?.id ||
+        comment?.author?._id ||
+        comment?.author?.id ||
+        comment?.userId ||
+        null,
       author:
-        comment?.owner?.username ||
-        comment?.author?.username ||
+        getUserName(comment?.owner || comment?.author, "") ||
         comment?.authorName ||
         "Unknown User",
       createdAt: comment?.createdAt || comment?.created_at || new Date().toISOString(),
@@ -90,12 +121,12 @@ function Post() {
     }));
   };
 
-  const fetchPost = useCallback(() => {
+  const fetchPost = useCallback(async () => {
     if (!postId) {
       navigate("/");
       return;
     }
-    dispatch(getPostById(postId));
+    await dispatch(getPostById(postId)).unwrap();
   }, [postId, dispatch, navigate]);
 
   const loadComments = useCallback(async () => {
@@ -104,13 +135,31 @@ function Post() {
       const response = await dispatch(getPostComments(postId)).unwrap();
       setComments(normalizeComments(response));
     } catch {
-      setComments([]);
+      // Keep last known comments to avoid empty flicker on transient API failures.
     }
   }, [dispatch, postId]);
 
   useEffect(() => {
-    fetchPost();
-    loadComments();
+    let active = true;
+    const loadData = async () => {
+      setPostRequestLoading(true);
+      setPostRequestDone(false);
+      try {
+        await fetchPost();
+      } catch {
+        // handled by slice error
+      }
+      await loadComments();
+      if (!active) return;
+      setPostRequestLoading(false);
+      setPostRequestDone(true);
+    };
+
+    loadData();
+
+    return () => {
+      active = false;
+    };
   }, [fetchPost, loadComments]);
 
   const handleDelete = async () => {
@@ -135,10 +184,15 @@ function Post() {
       navigate("/login");
       return;
     }
+    setActionError("");
+    setIsLikeSubmitting(true);
     try {
       await dispatch(togglePostLike(post._id)).unwrap();
+      await dispatch(getPostById(post._id)).unwrap();
     } catch {
-      alert("Failed to update like.");
+      setActionError("Could not update like right now. Please try again.");
+    } finally {
+      setIsLikeSubmitting(false);
     }
   };
 
@@ -151,13 +205,16 @@ function Post() {
       navigate("/login");
       return;
     }
-
+    setActionError("");
+    setIsCommentSubmitting(true);
     try {
       await dispatch(createComment({ postId: post?._id || postId, content })).unwrap();
       setCommentText("");
       await loadComments();
     } catch {
-      alert("Failed to post comment.");
+      setActionError("Could not post comment right now. Please try again.");
+    } finally {
+      setIsCommentSubmitting(false);
     }
   };
 
@@ -171,7 +228,7 @@ function Post() {
       await dispatch(toggleCommentLike(commentId)).unwrap();
       await loadComments();
     } catch {
-      alert("Failed to update comment like.");
+      setActionError("Could not update comment like right now.");
     }
   };
 
@@ -207,7 +264,7 @@ function Post() {
     }
   };
 
-  if (loading) {
+  if ((postRequestLoading || loading) && !post) {
     return (
       <main className="min-h-screen pt-32 pb-16 bg-gray-50 dark:bg-slate-900">
         <Contaner>
@@ -220,7 +277,7 @@ function Post() {
     );
   }
 
-  if (error || !post) {
+  if ((postRequestDone && !post) || (error && !post && !postRequestLoading)) {
     return (
       <main className="min-h-screen pt-32 pb-16 bg-gray-50 dark:bg-slate-900">
         <Contaner>
@@ -268,10 +325,10 @@ function Post() {
             <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 dark:text-slate-400">
               <span>{formatDate(post.createdAt)}</span>
               {post.views && <span>{'•'} {post.views} views</span>}
-              {post.owner && (
+              {(post.owner || post.author) && (
                 <span className="flex items-center gap-2">
                   <div className="w-6 h-6 bg-gray-300 rounded-full dark:bg-slate-600"></div>
-                  {post.owner.username}
+                  {getUserName(post.owner || post.author)}
                 </span>
               )}
             </div>
@@ -280,7 +337,8 @@ function Post() {
           <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
             <button
               onClick={handleLike}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              disabled={isLikeSubmitting}
+              className={`inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl text-sm font-semibold transition-all disabled:opacity-60 disabled:cursor-not-allowed ${
                 isLiked
                   ? "bg-primary text-white hover:bg-primary/90"
                   : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-700"
@@ -290,14 +348,14 @@ function Post() {
               <svg className="w-4 h-4" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
-              <span>{likesCount} Like{likesCount === 1 ? "" : "s"}</span>
+              <span>{isLikeSubmitting ? "Updating..." : `${likesCount} Like${likesCount === 1 ? "" : "s"}`}</span>
             </button>
 
             {isOwner && (
               <div className="flex gap-3">
                 <button
                   onClick={handleEdit}
-                  className="flex items-center gap-2 bg-primary/90 hover:bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium shadow hover:shadow-md transition-all duration-200"
+                  className="inline-flex items-center justify-center gap-2 h-11 px-5 bg-primary/90 hover:bg-primary text-white rounded-xl text-sm font-semibold shadow hover:shadow-md transition-all duration-200"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -306,7 +364,7 @@ function Post() {
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow hover:shadow-md transition-all duration-200"
+                  className="inline-flex items-center justify-center gap-2 h-11 px-5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold shadow hover:shadow-md transition-all duration-200"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -326,6 +384,12 @@ function Post() {
               Comments
             </h2>
 
+            {actionError && (
+              <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+                {actionError}
+              </div>
+            )}
+
             <form
               onSubmit={handleSubmitComment}
               className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-4 md:p-5 shadow-sm mb-6"
@@ -343,9 +407,10 @@ function Post() {
               <div className="mt-3 flex justify-end">
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold px-4 py-2.5 rounded-lg transition-colors"
+                  disabled={isCommentSubmitting}
+                  className="inline-flex items-center justify-center h-11 px-5 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Post Comment
+                  {isCommentSubmitting ? "Posting..." : "Post Comment"}
                 </button>
               </div>
             </form>
@@ -373,7 +438,7 @@ function Post() {
                       <button
                         type="button"
                         onClick={() => handleToggleCommentLike(comment.id)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                        className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold transition-colors ${
                           comment.liked
                             ? "bg-primary text-white"
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
@@ -398,14 +463,14 @@ function Post() {
                           <button
                             type="button"
                             onClick={cancelEditComment}
-                            className="px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 dark:text-slate-200 dark:border-slate-600"
+                            className="h-9 px-3 rounded-lg border border-gray-300 text-gray-700 dark:text-slate-200 dark:border-slate-600"
                           >
                             Cancel
                           </button>
                           <button
                             type="button"
                             onClick={() => saveEditComment(comment.id)}
-                            className="px-3 py-1.5 rounded-md bg-primary text-white"
+                            className="h-9 px-3 rounded-lg bg-primary text-white"
                           >
                             Save
                           </button>
@@ -417,19 +482,19 @@ function Post() {
                       </p>
                     )}
 
-                    {isAuthenticated && currentUser?.username === comment.author && editingCommentId !== comment.id && (
+                    {isAuthenticated && currentUserId === comment.authorId && editingCommentId !== comment.id && (
                       <div className="mt-3 flex gap-2 justify-end">
                         <button
                           type="button"
                           onClick={() => startEditComment(comment)}
-                          className="px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 text-xs dark:text-slate-200 dark:border-slate-600"
+                          className="h-8 px-3 rounded-lg border border-gray-300 text-gray-700 text-xs dark:text-slate-200 dark:border-slate-600"
                         >
                           Edit
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDeleteComment(comment.id)}
-                          className="px-3 py-1.5 rounded-md bg-red-500 text-white text-xs"
+                          className="h-8 px-3 rounded-lg bg-red-500 text-white text-xs"
                         >
                           Delete
                         </button>
@@ -442,7 +507,7 @@ function Post() {
           </section>
 
           <div className="text-center">
-            <Link to="/all-post" className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-3 rounded-xl shadow hover:shadow-lg transition-all duration-200">
+            <Link to="/all-post" className="inline-flex items-center gap-2 h-11 px-6 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl shadow hover:shadow-lg transition-all duration-200">
               {'<-'} Back to All Posts
             </Link>
           </div>

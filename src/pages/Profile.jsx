@@ -19,6 +19,42 @@ import { deletePost, getAllPosts } from "../features/post/postThunks";
 import { selectAllPosts } from "../features/post/postSlice";
 import { Contaner } from "../components";
 
+const getUserId = (user) =>
+  user?._id || user?.id || user?.userId || user?.data?._id || null;
+
+const getDisplayName = (user) =>
+  user?.username ||
+  user?.fullName ||
+  user?.name ||
+  user?.data?.username ||
+  user?.data?.fullName ||
+  "User";
+
+const getUserEmail = (user) =>
+  user?.email || user?.data?.email || "";
+
+const getUserBio = (user) =>
+  user?.bio || user?.about || user?.data?.bio || "";
+
+const getAvatarUrl = (user) =>
+  user?.avatar?.url ||
+  user?.avatar ||
+  user?.profilePic?.url ||
+  user?.profilePic ||
+  user?.image ||
+  "";
+
+const getPostOwnerId = (post) =>
+  post?.owner?._id ||
+  post?.owner?.id ||
+  (typeof post?.owner === "string" ? post.owner : null) ||
+  post?.author?._id ||
+  post?.author?.id ||
+  post?.authorId ||
+  post?.userId ||
+  post?.ownerId ||
+  null;
+
 function Profile() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -54,9 +90,9 @@ function Profile() {
   useEffect(() => {
     if (!user) return;
     setProfileData({
-      username: user.username || "",
-      email: user.email || "",
-      bio: user.bio || "",
+      username: getDisplayName(user),
+      email: getUserEmail(user),
+      bio: getUserBio(user),
     });
     setAvatarPreview("");
     setAvatarFile(null);
@@ -71,12 +107,10 @@ function Profile() {
   }, [avatarPreview]);
 
   const myPosts = useMemo(() => {
-    if (!user?._id || !Array.isArray(allPosts)) return [];
-    return allPosts.filter((post) => {
-      const ownerId = typeof post?.owner === "string" ? post.owner : post?.owner?._id;
-      return ownerId === user._id;
-    });
-  }, [allPosts, user?._id]);
+    const currentUserId = getUserId(user);
+    if (!currentUserId || !Array.isArray(allPosts)) return [];
+    return allPosts.filter((post) => getPostOwnerId(post) === currentUserId);
+  }, [allPosts, user]);
 
   const totalViews = useMemo(
     () => myPosts.reduce((sum, post) => sum + Number(post?.views || 0), 0),
@@ -225,8 +259,8 @@ function Profile() {
               <div className="flex items-center gap-4 md:gap-6">
                 <div className="relative">
                   <img
-                    src={avatarPreview || user.avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
-                    alt={user.username || "User avatar"}
+                    src={avatarPreview || getAvatarUrl(user) || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
+                    alt={getDisplayName(user)}
                     className="w-24 h-24 md:w-28 md:h-28 rounded-2xl object-cover border-2 border-gray-200 dark:border-slate-600"
                   />
                   <label className="absolute -bottom-2 -right-2 w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center cursor-pointer border-2 border-white shadow">
@@ -236,9 +270,9 @@ function Profile() {
                 </div>
 
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-slate-100">{user.username || "User"}</h1>
-                  <p className="text-gray-600 mt-1 dark:text-slate-300">{user.email}</p>
-                  <p className="text-sm text-gray-500 mt-2 dark:text-slate-400">{user.bio || "Add a short bio to complete your profile."}</p>
+                  <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-slate-100">{getDisplayName(user)}</h1>
+                  <p className="text-gray-600 mt-1 dark:text-slate-300">{getUserEmail(user)}</p>
+                  <p className="text-sm text-gray-500 mt-2 dark:text-slate-400">{getUserBio(user) || "Add a short bio to complete your profile."}</p>
                 </div>
               </div>
 
@@ -322,7 +356,7 @@ function Profile() {
                 {myPosts.map((post) => (
                   <div key={post._id} className="rounded-2xl border border-gray-200 overflow-hidden bg-white dark:bg-slate-900 dark:border-slate-700">
                     <img
-                      src={post.thumbnail}
+                      src={post.thumbnail || "https://via.placeholder.com/600x400?text=No+Image"}
                       alt={post.title}
                       className="w-full h-40 object-cover"
                     />

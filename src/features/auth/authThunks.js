@@ -6,6 +6,12 @@ const handleError = (error) =>
   error.message ||
   "Something went wrong";
 
+const buildErrorPayload = (error) => ({
+  statusCode: error?.response?.status || error?.statusCode || null,
+  message: handleError(error),
+  isNetworkError: !error?.response,
+});
+
 export const registerUser = createAsyncThunk(
   "auth/register",
   async (data, { rejectWithValue }) => {
@@ -51,7 +57,7 @@ export const getCurrentUser = createAsyncThunk(
       const res = await AuthService.currentUser();
       return res.data;
     } catch (err) {
-      return rejectWithValue(handleError(err));
+      return rejectWithValue(buildErrorPayload(err));
     }
   }
 );

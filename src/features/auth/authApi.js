@@ -14,6 +14,33 @@ const refreshApi = axios.create({
   timeout: 10000,
 });
 
+const refreshTokenWithFallback = async () => {
+  const attempts = [
+    { method: "post", url: "/refresh-token" },
+    { method: "post", url: "/refreshToken" },
+    { method: "get", url: "/refresh-token" },
+  ];
+
+  let lastError;
+  for (const attempt of attempts) {
+    try {
+      if (attempt.method === "post") {
+        await refreshApi.post(attempt.url, {});
+      } else {
+        await refreshApi.get(attempt.url);
+      }
+      return true;
+    } catch (error) {
+      lastError = error;
+      const statusCode = error?.response?.status;
+      // 401/403 means token is invalid/missing; extra endpoint retries won't help.
+      if (statusCode === 401 || statusCode === 403) break;
+    }
+  }
+
+  throw lastError;
+};
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -33,7 +60,7 @@ api.interceptors.response.use(
     ) {
       originalRequest._retry = true;
       try {
-        await refreshApi.post("/refresh-token");
+        await refreshTokenWithFallback();
         return api(originalRequest);
       } catch (err) {
         return Promise.reject(err);
@@ -56,7 +83,7 @@ export const AuthService = {
       headers: { "Content-Type": "multipart/form-data" },
     }),
   changeUserPassword: (data) => api.patch("/change-password", data),
-  refreshToken: () => api.post("/refresh-token"),
+  refreshToken: () => refreshTokenWithFallback(),
 };
 
 export default api;

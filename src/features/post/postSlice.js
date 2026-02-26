@@ -34,6 +34,13 @@ const extractPostList = (payload) => {
   return [];
 };
 
+const extractSinglePost = (payload) =>
+  payload?.data?.post ||
+  payload?.post ||
+  payload?.data ||
+  payload ||
+  null;
+
 const extractLikeState = (payload = {}) => {
   const base = payload?.data || payload;
   const postLike = base?.post || base?.likedPost || base;
@@ -101,7 +108,10 @@ const postSlice = createSlice({
       })
       .addCase(getPostById.fulfilled, (state, action) => {
         state.loading = false;
-        postAdapter.upsertOne(state, action.payload);
+        const post = extractSinglePost(action.payload);
+        if (post?._id) {
+          postAdapter.upsertOne(state, post);
+        }
       })
       .addCase(getPostById.rejected, (state, action) => {
         state.loading = false;
@@ -121,15 +131,19 @@ const postSlice = createSlice({
       })
       .addCase(createPost.fulfilled, (state, action) => {
         state.loading = false;
-        const newPost = action.payload.data || action.payload;
-        postAdapter.addOne(state, newPost);
-        state.message = "Post created successfully";
+        const newPost = extractSinglePost(action.payload);
+        if (newPost?._id) {
+          postAdapter.addOne(state, newPost);
+          state.message = "Post created successfully";
+        }
       })
       .addCase(updatePost.fulfilled, (state, action) => {
         state.loading = false;
-        const updatedPost = action.payload.data || action.payload;
-        postAdapter.updateOne(state, { id: updatedPost._id, changes: updatedPost });
-        state.message = "Post updated successfully";
+        const updatedPost = extractSinglePost(action.payload);
+        if (updatedPost?._id) {
+          postAdapter.updateOne(state, { id: updatedPost._id, changes: updatedPost });
+          state.message = "Post updated successfully";
+        }
       })
       .addCase(deletePost.fulfilled, (state, action) => {
         state.loading = false;
