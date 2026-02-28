@@ -10,6 +10,7 @@ import Profile from './pages/Profile.jsx';
 import ProfileSettings from './pages/ProfileSettings.jsx';
 import Search from './pages/Search.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
+import About from './pages/About.jsx';
 import { Provider } from 'react-redux';
 import { store } from './app/store.js';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
@@ -47,6 +48,7 @@ const router = createBrowserRouter([
         ),
       },
       { path: "/all-post", element: <AllPosts /> },
+      { path: "/about", element: <About /> },
       {
         path: "/add-post",
         element: (

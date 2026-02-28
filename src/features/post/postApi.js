@@ -1,12 +1,14 @@
 import axios from "axios";
 
 const API = import.meta.env.VITE_API_URL;
+const DEFAULT_TIMEOUT_MS = 30000;
+const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS) || DEFAULT_TIMEOUT_MS;
 
 const createClient = (baseURL) =>
   axios.create({
     baseURL,
     withCredentials: true,
-    timeout: 10000,
+    timeout: REQUEST_TIMEOUT_MS,
   });
 
 const postApi = createClient(`${API}/api/v1/post`);
@@ -15,6 +17,7 @@ const commentApi = createClient(`${API}/api/v1/comments`);
 const refreshApi = createClient(`${API}/api/v1/users`);
 
 const normalizeError = (error) => ({
+  code: error?.code || null,
   statusCode: error?.response?.status || null,
   message: error?.response?.data?.message || error?.message || "Request failed",
   data: error?.response?.data || null,

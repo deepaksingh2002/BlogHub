@@ -29,6 +29,7 @@ function Header({ isDarkMode, onToggleTheme }) {
     { name: "Signup", slug: "/signup", active: !authStatus },
     { name: "All Posts", slug: "/all-post", active: true },
     { name: "Add Post", slug: "/add-post", active: authStatus },
+    { name: "About Me", slug: "/about", active: true },
   ];
   const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
