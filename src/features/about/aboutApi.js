@@ -20,23 +20,7 @@ const refreshAccessToken = async () => {
 
 const toSafeString = (value) => (typeof value === "string" ? value : "");
 
-/**
- * @typedef {Object} AboutProfile
- * @property {string} fullName
- * @property {string} headline
- * @property {string} summary
- * @property {string} location
- * @property {string} email
- * @property {string} phone
- * @property {string} skills
- * @property {string} experience
- * @property {string} education
- * @property {string} resumeUrl
- * @property {string|null} updatedAt
- * @property {string} id
- */
 
-/** @type {AboutProfile} */
 export const defaultAboutProfile = {
   fullName: "",
   headline: "",
@@ -146,10 +130,16 @@ aboutApi.interceptors.response.use(
 );
 
 const getResumeDownloadUrl = () =>
-  import.meta.env.VITE_ABOUT_RESUME_DOWNLOAD_URL || `${API}/api/v1/about/aboutMe/resume/download`;
+  import.meta.env.VITE_ABOUT_RESUME_DOWNLOAD_URL || `${API}/api/v1/about/resume/download`;
 
 const getResumePreviewUrl = () =>
-  import.meta.env.VITE_ABOUT_RESUME_PREVIEW_URL || `${API}/api/v1/about/aboutMe/resume/preview`;
+  import.meta.env.VITE_ABOUT_RESUME_PREVIEW_URL || `${API}/api/v1/about/resume/preview`;
+
+const resumeEndpointCandidates = {
+  base: ["/resume", "/aboutMe/resume"],
+  preview: ["/resume/preview", "/aboutMe/resume/preview"],
+  download: ["/resume/download", "/aboutMe/resume/download"],
+};
 
 const extractResumeUrl = (payload = {}) => {
   return (
@@ -214,24 +204,26 @@ export const aboutService = {
     const methods = ["post", "put"];
     let lastError = null;
 
-    for (const method of methods) {
-      try {
-        const response = await aboutApi[method]("/aboutMe/resume", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-          onUploadProgress: (event) => {
-            if (!event?.total || typeof onProgress !== "function") return;
-            const percent = Math.round((event.loaded * 100) / event.total);
-            onProgress(percent);
-          },
-        });
+    for (const path of resumeEndpointCandidates.base) {
+      for (const method of methods) {
+        try {
+          const response = await aboutApi[method](path, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+            onUploadProgress: (event) => {
+              if (!event?.total || typeof onProgress !== "function") return;
+              const percent = Math.round((event.loaded * 100) / event.total);
+              onProgress(percent);
+            },
+          });
 
-        const profile = normalizeAboutProfile(response);
-        if (hasProfileData(profile)) return profile;
-        return this.getAboutForDashboard();
-      } catch (error) {
-        lastError = error;
-        const status = Number(error?.statusCode || 0);
-        if (status !== 404 && status !== 405) break;
+          const profile = normalizeAboutProfile(response);
+          if (hasProfileData(profile)) return profile;
+          return this.getAboutForDashboard();
+        } catch (error) {
+          lastError = error;
+          const status = Number(error?.statusCode || 0);
+          if (status !== 404 && status !== 405) break;
+        }
       }
     }
 
@@ -239,20 +231,53 @@ export const aboutService = {
   },
 
   async deleteResume() {
-    await aboutApi.delete("/aboutMe/resume");
-    return true;
+    let lastError = null;
+    for (const path of resumeEndpointCandidates.base) {
+      try {
+        await aboutApi.delete(path);
+        return true;
+      } catch (error) {
+        lastError = error;
+        const status = Number(error?.statusCode || 0);
+        if (status !== 404 && status !== 405) break;
+      }
+    }
+
+    throw lastError || new Error("Failed to delete resume.");
   },
 
   async resolveResumePreviewFileUrl() {
-    const response = await aboutApi.get("/aboutMe/resume/preview", { skipAuthRefresh: true });
-    const resolvedUrl = extractResumeUrl(response);
-    return resolvedUrl || getResumePreviewUrl();
+    let lastError = null;
+    for (const path of resumeEndpointCandidates.preview) {
+      try {
+        const response = await aboutApi.get(path, { skipAuthRefresh: true });
+        const resolvedUrl = extractResumeUrl(response);
+        return resolvedUrl || getResumePreviewUrl();
+      } catch (error) {
+        lastError = error;
+        const status = Number(error?.statusCode || 0);
+        if (status !== 404 && status !== 405) break;
+      }
+    }
+
+    throw lastError || new Error("Failed to resolve resume preview URL.");
   },
 
   async resolveResumeDownloadFileUrl() {
-    const response = await aboutApi.get("/aboutMe/resume/download", { skipAuthRefresh: true });
-    const resolvedUrl = extractResumeUrl(response);
-    return resolvedUrl || getResumeDownloadUrl();
+    let lastError = null;
+    for (const path of resumeEndpointCandidates.download) {
+      try {
+        const response = await aboutApi.get(path, { skipAuthRefresh: true });
+        const resolvedUrl = extractResumeUrl(response);
+        return resolvedUrl || getResumeDownloadUrl();
+      } catch (error) {
+        lastError = error;
+        const status = Number(error?.statusCode || 0);
+        if (status !== 404 && status !== 405) break;
+      }
+    }
+
+    throw lastError || new Error("Failed to resolve resume download URL.");
   },
 
   getResumePreviewUrl,
