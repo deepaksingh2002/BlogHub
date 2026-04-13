@@ -240,3 +240,4 @@ html:not(.dark) [class*="bg-gradient-to-"] {
 .animate-wave {
   animation: wave 1.4s infinite ease-in-out;
 }
+

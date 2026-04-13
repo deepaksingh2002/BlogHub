@@ -142,13 +142,13 @@ function About() {
                   <h1 className="mt-2 text-3xl sm:text-5xl font-black text-dark dark:text-light">
                     Deepak Singh
                   </h1>
-                  <p className="mt-2 text-base sm:text-lg font-semibold text-primary dark:text-primary">Fresher - MERN Stack Developer</p>
+                  <p className="mt-2 text-base sm:text-lg font-semibold text-primary dark:text-primary">Freelance MERN Stack Developer</p>
                   <p className="mt-2 max-w-3xl text-sm sm:text-base leading-relaxed text-dark/80 dark:text-light/80">
-                    Passionate and self-driven MERN stack developer with hands-on experience building full-stack web applications through academic projects and internships. Eager to contribute, learn fast, and grow in a collaborative engineering team.
+                    I am actively seeking freelance opportunities for modern web development projects. I build scalable full-stack applications with MongoDB, Express, React, and Node.js, and I focus on clean UI, secure APIs, and reliable delivery.
                   </p>
                 </div>
                 <span className="shrink-0 inline-flex items-center rounded-full border border-beige bg-background px-3 py-1 text-xs font-semibold text-dark/80 dark:bg-background dark:border-light/20 dark:text-light/80">
-                  Recruiter View
+                  Available for Freelance Work
                 </span>
               </div>
             </div>
@@ -188,9 +188,7 @@ function About() {
                 </div>
               </div>
 
-              <div className="mt-4 rounded-xl border border-primary/30 bg-light px-4 py-2 text-xs sm:text-sm text-primary dark:bg-background dark:border-primary/40 dark:text-primary">
-                Optimized first-page resume view for fast screening. Click <span className="font-semibold">Open Preview</span> to review the complete document.
-              </div>
+              
             </div>
 
             <div className="border-t border-beige bg-background px-6 sm:px-8 py-4 dark:bg-background dark:border-light/20">
