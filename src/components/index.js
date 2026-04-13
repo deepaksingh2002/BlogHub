@@ -1,6 +1,6 @@
 import Header from "./Header/Header";
 import Footer from "./Footer/Footer";
-import Contaner from "./container/Container";
+import Container from "./container/Container";
 import Logo from "./Logo";
 import LogoutBtn from "./Header/LogoutBtn";
 import Button from './Button';
@@ -20,7 +20,7 @@ import LoadingAnimation from "./Animation/LoadingAnimation";
 export {
     Header,
     Footer,
-    Contaner,
+    Container,
     Logo,
     LogoutBtn,
     Button,

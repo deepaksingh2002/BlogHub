@@ -12,7 +12,7 @@ const createClient = (baseURL) =>
   });
 
 const postApi = createClient(`${API}/api/v1/post`);
-const likeApi = createClient(`${API}/api/v1/like`);
+const likesApi = createClient(`${API}/api/v1/likes`);
 const commentApi = createClient(`${API}/api/v1/comments`);
 const refreshApi = createClient(`${API}/api/v1/users`);
 
@@ -62,7 +62,7 @@ const attachAuthRetry = (client, { unwrapData = true } = {}) => {
 };
 
 attachAuthRetry(postApi);
-attachAuthRetry(likeApi);
+attachAuthRetry(likesApi);
 attachAuthRetry(commentApi, { unwrapData: false });
 
 export const postService = {
@@ -75,9 +75,9 @@ export const postService = {
 };
 
 export const likeService = {
-  togglePostLike: (postId) => likeApi.patch(`/posts/${postId}/like`),
-  toggleCommentLike: (commentId) => likeApi.patch(`/comments/${commentId}/like`),
-  getLikedPosts: () => likeApi.get("/liked-posts"),
+  togglePostLike: (postId) => likesApi.patch(`/posts/${postId}/like`),
+  toggleCommentLike: (commentId) => likesApi.patch(`/comments/${commentId}/like`),
+  getLikedPosts: () => likesApi.get("/liked-posts"),
 };
 
 export const commentService = {

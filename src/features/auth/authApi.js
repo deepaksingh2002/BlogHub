@@ -53,6 +53,7 @@ export const AuthService = {
   register: (data) => api.post("/register", data),
   login: (data) => api.post("/login", data),
   logout: () => api.post("/logout"),
+  applyForAuthor: (data) => api.post("/apply-author", data),
   forgotPassword: async (data) => {
     const endpoints = ["/forgot-password", "/forgotPassword"];
     let lastError = null;
@@ -74,12 +75,12 @@ export const AuthService = {
   },
   currentUser: (config = {}) => api.get("/currentUser", config),
   getUserProfile: () => api.get("/profile"),
-  updateUserProfile: (data) => api.patch("/update-profile", data),
-  updateUserAvatar: (formData) =>
+  updateUserProfile: (_user, data) => api.patch("/update-profile", data),
+  updateUserAvatar: (_user, formData) =>
     api.patch("/update-avatar", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
-  changeUserPassword: (data) => api.patch("/change-password", data),
+  changeUserPassword: (_user, data) => api.patch("/change-password", data),
   refreshToken: () => refreshAccessToken(),
 };
 

@@ -105,7 +105,7 @@ The frontend expects backend endpoints under:
 
 - `${VITE_API_URL}/api/v1/users`
 - `${VITE_API_URL}/api/v1/post`
-- `${VITE_API_URL}/api/v1/like`
+- `${VITE_API_URL}/api/v1/likes`
 
 Profile routes used by frontend:
 
@@ -116,9 +116,9 @@ Profile routes used by frontend:
 
 Like routes used by frontend:
 
-- `POST /api/v1/like/toggle/post/:postId`
-- `POST /api/v1/like/toggle/comment/:commentId`
-- `GET /api/v1/like/liked/posts`
+- `PATCH /api/v1/likes/posts/:postId/like`
+- `PATCH /api/v1/likes/comments/:commentId/like`
+- `GET /api/v1/likes/liked-posts`
 
 Make sure your backend CORS and cookie settings allow frontend origin + credentials.
 
