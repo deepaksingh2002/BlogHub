@@ -1,22 +1,27 @@
 import axios from "axios";
 import { runRefreshWithBackoff } from "../../lib/refreshTokenGuard";
+import {
+  buildRefreshPayload,
+  createAuthClient,
+  refreshSessionTokens,
+} from "../auth/authSession";
 
 const API = import.meta.env.VITE_API_URL || "";
 
-const adminApi = axios.create({
+const adminApi = createAuthClient({
   baseURL: `${API}/api/v1/admin`,
-  withCredentials: true,
   timeout: 30000,
 });
 
-const refreshApi = axios.create({
+const refreshApi = createAuthClient({
   baseURL: `${API}/api/v1/users`,
-  withCredentials: true,
   timeout: 10000,
 });
 
 const refreshAccessToken = async () => {
-  await runRefreshWithBackoff(() => refreshApi.post("/refresh-token", {}));
+  await runRefreshWithBackoff(() =>
+    refreshSessionTokens(() => refreshApi.post("/refresh-token", buildRefreshPayload()))
+  );
 };
 
 const normalizeError = (error) => {

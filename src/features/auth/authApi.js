@@ -1,22 +1,27 @@
 import axios from "axios";
 import { runRefreshWithBackoff } from "../../lib/refreshTokenGuard";
+import {
+  buildRefreshPayload,
+  createAuthClient,
+  refreshSessionTokens,
+} from "./authSession";
 
 const API = import.meta.env.VITE_API_URL;
 
-const api = axios.create({
+const api = createAuthClient({
   baseURL: `${API}/api/v1/users`,
-  withCredentials: true,
   timeout: 10000,
 });
 
-const refreshApi = axios.create({
+const refreshApi = createAuthClient({
   baseURL: `${API}/api/v1/users`,
-  withCredentials: true,
   timeout: 10000,
 });
 
 const refreshAccessToken = async () => {
-  await runRefreshWithBackoff(() => refreshApi.post("/refresh-token", {}));
+  await runRefreshWithBackoff(() =>
+    refreshSessionTokens(() => refreshApi.post("/refresh-token", buildRefreshPayload()))
+  );
 };
 
 // Auth client interceptor:
@@ -53,7 +58,7 @@ api.interceptors.response.use(
 export const AuthService = {
   register: (data) => api.post("/register", data),
   login: (data) => api.post("/login", data),
-  logout: () => api.post("/logout"),
+  logout: () => api.post("/logout", buildRefreshPayload()),
   applyForAuthor: (data) => api.post("/apply-author", data),
   forgotPassword: async (data) => {
     const endpoints = ["/forgot-password", "/forgotPassword"];

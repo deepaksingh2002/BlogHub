@@ -2,6 +2,11 @@ import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
 import { AuthService } from "./authApi";
+import {
+  clearStoredAuthTokens,
+  extractAuthTokens,
+  setStoredAuthTokens,
+} from "./authSession";
 import { clearAuthSession, setAuthChecked, setAuthSession } from "./authSlice";
 
 const parseUser = (payload) => {
@@ -44,7 +49,7 @@ const useBootstrapCurrentUserQueryWithOptions = (
     queryKey: ["auth", "currentUser"],
     enabled,
     queryFn: async () => {
-      const response = await AuthService.currentUser({ skipAuthRefresh: true });
+      const response = await AuthService.currentUser();
       return response.data;
     },
     retry: false,
@@ -53,6 +58,7 @@ const useBootstrapCurrentUserQueryWithOptions = (
   useEffect(() => {
     if (query.isSuccess) {
       dispatch(setAuthSession({ user: parseUser(query.data) }));
+      setStoredAuthTokens(extractAuthTokens(query.data));
     }
   }, [dispatch, query.data, query.isSuccess]);
 
@@ -60,6 +66,7 @@ const useBootstrapCurrentUserQueryWithOptions = (
     if (!query.isError) return;
 
     if (getStatusCode(query.error) === 401) {
+      clearStoredAuthTokens();
       if (clearOn401) {
         dispatch(clearAuthSession());
       } else {
@@ -88,6 +95,7 @@ export const useLoginMutation = () => {
     },
     onSuccess: async (data) => {
       dispatch(setAuthSession({ user: parseUser(data) }));
+      setStoredAuthTokens(extractAuthTokens(data));
       await queryClient.invalidateQueries({ queryKey: ["auth", "currentUser"] });
     },
   });
@@ -118,6 +126,7 @@ export const useLogoutMutation = () => {
     },
     onSuccess: async () => {
       dispatch(clearAuthSession());
+      clearStoredAuthTokens();
       await queryClient.invalidateQueries({ queryKey: ["auth"] });
     },
   });
@@ -163,6 +172,7 @@ const createAuthMutation = (mutationFn) => {
         if (user) {
           dispatch(setAuthSession({ user }));
         }
+        setStoredAuthTokens(extractAuthTokens(data));
       },
     });
   };
