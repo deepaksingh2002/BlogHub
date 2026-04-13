@@ -3,6 +3,7 @@ import { subscriptionService } from "./subscriptionApi";
 
 const subscriptionKeys = {
   authors: ["authors", "list"],
+  followers: (channelId) => ["subscriptions", "followers", String(channelId || "")],
 };
 
 const normalizeAuthors = (payload) => {
@@ -28,6 +29,35 @@ export const useAuthorsListQuery = (enabled = true) => {
     queryFn: async () => {
       const response = await subscriptionService.getAuthors();
       return normalizeAuthors(response);
+    },
+  });
+};
+
+const normalizeFollowers = (payload) => {
+  const list = payload?.data || payload || [];
+  if (!Array.isArray(list)) return [];
+
+  return list.map((entry) => {
+    const follower = entry?.subscriber || {};
+
+    return {
+      _id: follower?._id || follower?.id || entry?._id || "",
+      username: follower?.username || "",
+      email: follower?.email || "",
+      fullName: follower?.fullName || "",
+      avatar: follower?.avatar || null,
+      role: follower?.role || "",
+    };
+  });
+};
+
+export const useFollowersListQuery = (channelId, enabled = true) => {
+  return useQuery({
+    queryKey: subscriptionKeys.followers(channelId),
+    enabled: Boolean(enabled && channelId),
+    queryFn: async () => {
+      const response = await subscriptionService.getChannelSubscribers(channelId);
+      return normalizeFollowers(response);
     },
   });
 };

@@ -69,6 +69,7 @@ attachAuthRetry(subscriptionsApi);
 
 export const subscriptionService = {
   getAuthors: () => usersApi.get("/authors"),
+  getChannelSubscribers: (channelId) => subscriptionsApi.get(`/c/${channelId}`),
   toggleFollow: (channelId) => subscriptionsApi.post(`/c/${channelId}`),
 };
 

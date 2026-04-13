@@ -63,10 +63,9 @@ function Profile() {
   const postsQuery = usePostsQuery();
   const updateAvatarMutation = useUpdateUserAvatarMutation();
   const applyForAuthorMutation = useApplyForAuthorMutation();
+  const user = useSelector(selectAuthUser);
   const logoutMutation = useLogoutMutation();
   const deletePostMutation = useDeletePostMutation();
-
-  const user = useSelector(selectAuthUser);
   const loading =
     userProfileQuery.isFetching ||
     postsQuery.isFetching ||
@@ -75,7 +74,7 @@ function Profile() {
     logoutMutation.isPending;
   const error = "";
   const message = "";
-  const allPosts = postsQuery.data || [];
+  const allPosts = useMemo(() => postsQuery.data || [], [postsQuery.data]);
 
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState("");
@@ -270,19 +269,31 @@ function Profile() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3 w-full xl:w-auto">
-                <div className="rounded-2xl bg-background border border-beige px-4 py-3 text-center min-w-24 sm:min-w-[110px] dark:bg-background dark:border-light/20">
-                  <p className="text-2xl font-black text-dark dark:text-light">{myPosts.length}</p>
-                  <p className="text-xs sm:text-sm text-dark/60 dark:text-light/70">Managed Posts</p>
+              <div className="w-full xl:w-auto">
+                <div className="rounded-2xl bg-background border border-beige px-4 py-4 dark:bg-background dark:border-light/20">
+                  <div className="grid grid-cols-3 gap-3 text-center min-w-0">
+                    <div className="rounded-xl bg-light px-3 py-3 dark:bg-background">
+                      <p className="text-2xl font-black text-dark dark:text-light">{myPosts.length}</p>
+                      <p className="text-xs sm:text-sm text-dark/60 dark:text-light/70">Managed Posts</p>
+                    </div>
+                    <div className="rounded-xl bg-light px-3 py-3 dark:bg-background">
+                      <p className="text-2xl font-black text-dark dark:text-light">{totalViews}</p>
+                      <p className="text-xs sm:text-sm text-dark/60 dark:text-light/70">Views</p>
+                    </div>
+                    <div className="rounded-xl bg-light px-3 py-3 dark:bg-background">
+                      <p className="text-2xl font-black text-dark dark:text-light">{totalLikes}</p>
+                      <p className="text-xs sm:text-sm text-dark/60 dark:text-light/70">Likes</p>
+                    </div>
+                  </div>
+
+                 
                 </div>
-                <div className="rounded-2xl bg-background border border-beige px-4 py-3 text-center min-w-24 sm:min-w-[110px] dark:bg-background dark:border-light/20">
-                  <p className="text-2xl font-black text-dark dark:text-light">{totalViews}</p>
-                  <p className="text-xs sm:text-sm text-dark/60 dark:text-light/70">Views</p>
-                </div>
-                <div className="rounded-2xl bg-background border border-beige px-4 py-3 text-center min-w-24 sm:min-w-[110px] dark:bg-background dark:border-light/20">
-                  <p className="text-2xl font-black text-dark dark:text-light">{totalLikes}</p>
-                  <p className="text-xs sm:text-sm text-dark/60 dark:text-light/70">Likes</p>
-                </div>
+                 <Link
+                    to="/profile/connections"
+                    className="mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-primary px-5 py-3.5 text-base font-bold text-white shadow-sm hover:opacity-90"
+                  >
+                    Connections
+                  </Link>
               </div>
             </div>
 

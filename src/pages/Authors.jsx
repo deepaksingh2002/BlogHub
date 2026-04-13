@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { HiCheckBadge } from "react-icons/hi2";
 import { useSelector } from "react-redux";
+import { useSearchParams } from "react-router-dom";
 import { Container } from "../components";
 import { selectAuthUser } from "../features/auth/authSlice";
 import { useAuthorsListQuery, useToggleFollowMutation } from "../features/subscription/useSubscriptionQueries";
@@ -17,6 +18,8 @@ const getAvatarUrl = (author) =>
   "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
 function Authors() {
+  const [searchParams] = useSearchParams();
+  const focusedAuthorId = searchParams.get("focus") || "";
   const currentUser = useSelector(selectAuthUser);
   const currentUserId = currentUser?._id || currentUser?.id || currentUser?.userId || null;
 
@@ -33,6 +36,15 @@ function Authors() {
       // handled by query state
     }
   };
+
+  useEffect(() => {
+    if (!focusedAuthorId || authorsQuery.isLoading || authorsQuery.isFetching) return;
+
+    const element = document.getElementById(`author-card-${focusedAuthorId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [focusedAuthorId, authorsQuery.isLoading, authorsQuery.isFetching]);
 
   return (
     <div className="min-h-screen pt-28 md:pt-32 pb-16 bg-linear-to-b from-gray-50 via-white to-gray-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
@@ -66,11 +78,17 @@ function Authors() {
                 const isSelf = currentUserId && String(currentUserId) === String(authorId);
                 const isFollowing = Boolean(author?.isFollowing);
                 const isAuthorVerified = isVerifiedAuthor(author);
+                const isFocused = focusedAuthorId && String(focusedAuthorId) === String(authorId);
 
                 return (
                   <article
                     key={authorId}
-                    className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm dark:bg-slate-800 dark:border-slate-700"
+                    id={authorId ? `author-card-${authorId}` : undefined}
+                    className={
+                      isFocused
+                        ? "rounded-2xl border-2 border-primary bg-white p-4 sm:p-5 shadow-sm ring-2 ring-primary/25 dark:bg-slate-800"
+                        : "rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm dark:bg-slate-800 dark:border-slate-700"
+                    }
                   >
                     <div className="flex items-start gap-4">
                       <img

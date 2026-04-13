@@ -7,6 +7,7 @@ import Post from './pages/Post.jsx';
 import AddPost from './pages/AddPost.jsx';
 import EditPost from './pages/EditPost.jsx';
 import Profile from './pages/Profile.jsx';
+import SubscriberConnectionsPage from './pages/SubscriberConnectionsPage.jsx';
 import ProfileSettings from './pages/ProfileSettings.jsx';
 import Search from './pages/Search.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
@@ -87,6 +88,14 @@ const router = createBrowserRouter([
         element: (
           <AuthLayout authentication>
             <ProfileSettings />
+          </AuthLayout>
+        ),
+      },
+      {
+        path: "/profile/connections",
+        element: (
+          <AuthLayout authentication>
+            <SubscriberConnectionsPage />
           </AuthLayout>
         ),
       },

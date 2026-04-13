@@ -1,10 +1,12 @@
 import React, { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { HiOutlineShieldCheck } from "react-icons/hi2";
 import { Container } from "../components";
 import AdminUsersPanel from "../components/Admin/AdminUsersPanel";
-import { selectAuthUser } from "../features/auth/authSlice";
+import { clearAuthSession, selectAuthUser } from "../features/auth/authSlice";
+import { clearStoredAuthTokens, getStoredRefreshToken } from "../features/auth/authSession";
+import { useLogoutMutation } from "../features/auth/useAuthQueries";
 import { useAdminOverviewQuery, useAdminUsersQuery } from "../features/admin/useAdminQueries";
 import { hasRole } from "../utils/roleHelpers";
 
@@ -13,8 +15,10 @@ const getAvatarUrl = (user) =>
 
 function AdminProfile() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const currentUser = useSelector(selectAuthUser);
   const isAdmin = useMemo(() => hasRole(currentUser, ["admin", "superadmin"]), [currentUser]);
+  const logoutMutation = useLogoutMutation();
 
   const overviewQuery = useAdminOverviewQuery(isAdmin);
   const usersQuery = useAdminUsersQuery(
@@ -40,6 +44,14 @@ function AdminProfile() {
 
   const profile = overviewQuery.data?.profile || {};
   const stats = overviewQuery.data?.stats || {};
+
+  const handleLogout = () => {
+    const refreshToken = getStoredRefreshToken();
+    dispatch(clearAuthSession());
+    clearStoredAuthTokens();
+    navigate("/", { replace: true });
+    logoutMutation.mutate({ refreshToken });
+  };
 
   if (!isAdmin) {
     return (
@@ -122,6 +134,14 @@ function AdminProfile() {
                 className="inline-flex items-center rounded-xl border border-beige bg-background px-4 py-2 text-sm font-semibold text-dark hover:bg-light dark:border-light/20 dark:bg-background dark:text-light dark:hover:bg-background"
               >
                 Go to Moderation
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={logoutMutation.isPending}
+                className="inline-flex items-center rounded-xl bg-warning px-4 py-2 text-sm font-semibold text-white hover:bg-warning/90 disabled:opacity-60"
+              >
+                {logoutMutation.isPending ? "Logging out..." : "Logout"}
               </button>
             </div>
           </section>

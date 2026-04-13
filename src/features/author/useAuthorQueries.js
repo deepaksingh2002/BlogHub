@@ -2,14 +2,23 @@ import { useQuery } from "@tanstack/react-query";
 import { authorService } from "./authorApi";
 
 const pickStats = (payload) => {
-  return (
+  const candidate =
     payload?.stats ||
     payload?.dashboard ||
+    payload?.posts ||
     payload?.data?.stats ||
     payload?.data?.dashboard ||
+    payload?.data?.posts ||
     payload?.data ||
     payload ||
-    {}
+    {};
+
+  if (candidate && typeof candidate === "object" && candidate.posts && typeof candidate.posts === "object") {
+    return candidate.posts;
+  }
+
+  return (
+    candidate
   );
 };
 
