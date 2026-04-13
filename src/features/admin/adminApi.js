@@ -1,4 +1,5 @@
 import axios from "axios";
+import { runRefreshWithBackoff } from "../../lib/refreshTokenGuard";
 
 const API = import.meta.env.VITE_API_URL || "";
 
@@ -15,7 +16,7 @@ const refreshApi = axios.create({
 });
 
 const refreshAccessToken = async () => {
-  await refreshApi.post("/refresh-token", {});
+  await runRefreshWithBackoff(() => refreshApi.post("/refresh-token", {}));
 };
 
 const normalizeError = (error) => {

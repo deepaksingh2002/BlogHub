@@ -1,4 +1,5 @@
 import axios from "axios";
+import { runRefreshWithBackoff } from "../../lib/refreshTokenGuard";
 
 const API = import.meta.env.VITE_API_URL;
 const DEFAULT_TIMEOUT_MS = 30000;
@@ -24,7 +25,7 @@ const normalizeError = (error) => ({
 });
 
 const refreshAccessToken = async () => {
-  await refreshApi.post("/refresh-token", {});
+  await runRefreshWithBackoff(() => refreshApi.post("/refresh-token", {}));
 };
 
 // Shared interceptor:

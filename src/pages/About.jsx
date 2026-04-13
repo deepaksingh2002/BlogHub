@@ -8,7 +8,8 @@ import {
   useResumeLinksQuery,
   useUploadResumeMutation,
 } from "../features/about/useAboutQueries";
-import { selectIsAuthenticated } from "../features/auth/authSlice";
+import { selectAuthUser, selectIsAuthenticated } from "../features/auth/authSlice";
+import { isRoleAllowed } from "../utils/roleHelpers";
 
 const buildFirstPageViewUrl = (url) => {
   if (!url) return "";
@@ -29,6 +30,8 @@ const getResumeFileName = (url) => {
 function About() {
   const navigate = useNavigate();
   const isAuthenticated = useSelector(selectIsAuthenticated);
+  const authUser = useSelector(selectAuthUser);
+  const canManageResume = isRoleAllowed(authUser, ["admin", "superadmin"]);
   const resumeLinksQuery = useResumeLinksQuery();
   const uploadResumeMutation = useUploadResumeMutation();
   const deleteResumeMutation = useDeleteResumeMutation();
@@ -152,8 +155,8 @@ function About() {
 
             <div className="mt-5 border-t border-beige bg-background px-6 sm:px-8 py-3 dark:bg-background dark:border-light/20">
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs sm:text-sm text-dark/80 dark:text-light/80">
+                <span>{`Contact me:`}</span>
                 <span>{`✉  deepakksingh1202@gmail.com`}</span>
-                <span>{`💼  Applied: Junior MERN Developer - Remote / Hybrid`}</span>
               </div>
             </div>
 
@@ -209,7 +212,7 @@ function About() {
                   Download PDF
                 </a>
 
-                {isAuthenticated && (
+                {isAuthenticated && canManageResume && (
                   <>
                     <label className="inline-flex cursor-pointer items-center rounded-xl border border-beige bg-background px-4 py-2 text-sm font-semibold text-dark hover:bg-light dark:bg-background dark:border-light/20 dark:text-light dark:hover:bg-background">
                       <input
@@ -235,12 +238,12 @@ function About() {
             </div>
           </section>
 
-          {errorMessage && (
+          {errorMessage && canManageResume && (
             <p className="rounded-xl border border-warning/30 bg-light px-4 py-3 text-sm font-medium text-warning dark:border-warning/40 dark:bg-background dark:text-warning">
               {errorMessage}
             </p>
           )}
-          {statusMessage && (
+          {statusMessage && canManageResume && (
             <p className="rounded-xl border border-secondary/30 bg-light px-4 py-3 text-sm font-medium text-secondary dark:border-secondary/40 dark:bg-background dark:text-secondary">
               {statusMessage}
             </p>
