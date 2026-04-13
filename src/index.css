@@ -1,5 +1,177 @@
 @import "./tailwind.css";
 
+html,
+body,
+#root {
+  background-color: var(--color-beige);
+}
+
+/* Force a consistent light-mode site background even when pages use gradient utilities. */
+html:not(.dark) [class*="bg-[linear-gradient"],
+html:not(.dark) [class*="bg-linear-to-"],
+html:not(.dark) [class*="bg-gradient-to-"] {
+  background-image: none !important;
+  background-color: var(--color-beige) !important;
+}
+
+.dark [class*="bg-[linear-gradient"],
+.dark [class*="bg-linear-to-"],
+.dark [class*="bg-gradient-to-"] {
+  background-image: none !important;
+  background-color: var(--color-background) !important;
+}
+
+/* Global color-family remap to project palette tokens. */
+[class*="text-blue-"],
+[class*="text-cyan-"],
+[class*="text-sky-"] {
+  color: var(--color-primary) !important;
+}
+
+[class*="bg-blue-"],
+[class*="bg-cyan-"],
+[class*="bg-sky-"] {
+  background-color: color-mix(in srgb, var(--color-primary) 14%, white) !important;
+}
+
+[class*="border-blue-"],
+[class*="border-cyan-"],
+[class*="border-sky-"] {
+  border-color: color-mix(in srgb, var(--color-primary) 44%, white) !important;
+}
+
+[class*="text-green-"],
+[class*="text-emerald-"] {
+  color: var(--color-secondary) !important;
+}
+
+[class*="bg-green-"],
+[class*="bg-emerald-"] {
+  background-color: color-mix(in srgb, var(--color-secondary) 16%, white) !important;
+}
+
+[class*="border-green-"],
+[class*="border-emerald-"] {
+  border-color: color-mix(in srgb, var(--color-secondary) 40%, white) !important;
+}
+
+[class*="text-red-"],
+[class*="text-orange-"],
+[class*="text-amber-"] {
+  color: var(--color-warning) !important;
+}
+
+[class*="bg-red-"],
+[class*="bg-orange-"],
+[class*="bg-amber-"] {
+  background-color: color-mix(in srgb, var(--color-warning) 14%, white) !important;
+}
+
+[class*="border-red-"],
+[class*="border-orange-"],
+[class*="border-amber-"] {
+  border-color: color-mix(in srgb, var(--color-warning) 42%, white) !important;
+}
+
+[class*="text-violet-"],
+[class*="text-purple-"],
+[class*="text-indigo-"] {
+  color: var(--color-accent) !important;
+}
+
+[class*="bg-violet-"],
+[class*="bg-purple-"],
+[class*="bg-indigo-"] {
+  background-color: color-mix(in srgb, var(--color-accent) 14%, white) !important;
+}
+
+[class*="border-violet-"],
+[class*="border-purple-"],
+[class*="border-indigo-"] {
+  border-color: color-mix(in srgb, var(--color-accent) 42%, white) !important;
+}
+
+[class*="text-gray-"],
+[class*="text-slate-"] {
+  color: var(--color-dark) !important;
+}
+
+[class*="bg-gray-"],
+[class*="bg-slate-"] {
+  background-color: var(--color-light) !important;
+}
+
+[class*="border-gray-"],
+[class*="border-slate-"] {
+  border-color: color-mix(in srgb, var(--color-dark) 24%, white) !important;
+}
+
+.dark [class*="bg-blue-"],
+.dark [class*="bg-cyan-"],
+.dark [class*="bg-sky-"] {
+  background-color: color-mix(in srgb, var(--color-primary) 28%, black) !important;
+}
+
+.dark [class*="bg-green-"],
+.dark [class*="bg-emerald-"] {
+  background-color: color-mix(in srgb, var(--color-secondary) 26%, black) !important;
+}
+
+.dark [class*="bg-red-"],
+.dark [class*="bg-orange-"],
+.dark [class*="bg-amber-"] {
+  background-color: color-mix(in srgb, var(--color-warning) 26%, black) !important;
+}
+
+.dark [class*="bg-violet-"],
+.dark [class*="bg-purple-"],
+.dark [class*="bg-indigo-"] {
+  background-color: color-mix(in srgb, var(--color-accent) 26%, black) !important;
+}
+
+.dark [class*="bg-gray-"],
+.dark [class*="bg-slate-"] {
+  background-color: var(--color-light) !important;
+}
+
+/* Remap repeated hardcoded hex utility classes to tokens. */
+[class*="bg-[#EFE8DB]"],
+[class*="bg-[#efe8db]"],
+[class*="bg-[#f2ecdf]"],
+[class*="bg-[#f3eee3]"],
+[class*="bg-[#f7f4ee]"],
+[class*="bg-[#faf7f1]"],
+[class*="bg-[#faf8f3]"] {
+  background-color: var(--color-light) !important;
+}
+
+[class*="text-[#1f2937]"],
+[class*="text-[#374151]"],
+[class*="text-[#4b5563]"],
+[class*="text-[#5a5447]"],
+[class*="text-[#5d584d]"],
+[class*="text-[#6b7280]"] {
+  color: var(--color-dark) !important;
+}
+
+[class*="text-[#c15a2a]"],
+[class*="text-[#d14d27]"],
+[class*="text-[#d9481f]"],
+[class*="text-[#b4532c]"] {
+  color: var(--color-warning) !important;
+}
+
+[class*="border-[#d7d0c2]"],
+[class*="border-[#ddd4c4]"],
+[class*="border-[#dbd3c6]"],
+[class*="border-[#d8d0c1]"],
+[class*="border-[#d5ccbc]"],
+[class*="border-[#d9d0bf]"],
+[class*="border-[#cfc6b6]"],
+[class*="border-[#d4cdc0]"] {
+  border-color: var(--color-beige) !important;
+}
+
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }

@@ -1,39 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import './App.css';
-import { useDispatch, useSelector } from 'react-redux';
-import { getCurrentUser } from "./features/auth/authThunks";
-import { selectAuthChecked, selectIsAuthenticated } from "./features/auth/authSlice";
-import { getLikedPosts } from "./features/post/postThunks";
+import { useSelector } from 'react-redux';
+import { selectAuthChecked } from "./features/auth/authSlice";
 import { Footer, Header } from './components';
 import { Outlet, useLocation } from 'react-router-dom';
+import { useBootstrapCurrentUserQuery } from './features/auth/useAuthQueries';
 
 function App() {
-  const dispatch = useDispatch();
   const location = useLocation();
   const authChecked = useSelector(selectAuthChecked);
-  const isAuthenticated = useSelector(selectIsAuthenticated);
-  const hasCheckedAuth = useRef(false);
-  const hasHydratedLikes = useRef(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  useEffect(() => {
-    if (!authChecked && !hasCheckedAuth.current) {
-      dispatch(getCurrentUser());
-      hasCheckedAuth.current = true;
-    }
-  }, [dispatch, authChecked]);
-
-  useEffect(() => {
-    if (!authChecked || !isAuthenticated || hasHydratedLikes.current) return;
-    dispatch(getLikedPosts());
-    hasHydratedLikes.current = true;
-  }, [dispatch, authChecked, isAuthenticated]);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      hasHydratedLikes.current = false;
-    }
-  }, [isAuthenticated]);
+  useBootstrapCurrentUserQuery(!authChecked);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
@@ -54,7 +32,7 @@ function App() {
   const toggleTheme = () => setIsDarkMode((prev) => !prev);
 
   return (
-    <div className="min-h-screen flex flex-col bg-light text-dark transition-colors dark:bg-slate-900 dark:text-slate-100">
+    <div className="min-h-screen flex flex-col bg-beige text-dark transition-colors dark:bg-background dark:text-dark">
       <Header isDarkMode={isDarkMode} onToggleTheme={toggleTheme} />
       <main className="flex-1">
         <Outlet />

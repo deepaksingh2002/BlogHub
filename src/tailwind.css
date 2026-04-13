@@ -1,24 +1,72 @@
 @import "tailwindcss";
 @custom-variant dark (&:is(.dark *));
 
-/* Define custom colors */
+/* Warm Editorial (light) + Midnight Amber (dark) Blog Palette */
 :root {
-  --color-primary: #F26A1B;
-  --color-secondary: #3DAEF2;
-  --color-accent: #48B87C;
-  --color-warning: #E95454;
-  --color-dark: #1A1A2E;
-  --color-light: #F9F9F9;
-  --color-background: #FFFFFF;
-  --color-aqua: #4BC4C0;
-  --color-beige: #F4EDE5;
+  --brand-primary: #2C7A7B;
+  --brand-secondary: #C8956B;
+  --brand-accent: #A47864;
+  --brand-warning: #DD6B20;
+  --brand-dark: #2D2417;
+  --brand-light: #FAF7F2;
+  --brand-background: #FFFEF9;
+  --brand-aqua: #4FD1C5;
+  --brand-beige: #F0E8DC;
+
+  /* Primary - Deep Teal (kept — pairs well with warm cream) */
+  --color-primary: var(--brand-primary);
+
+  /* Secondary - Caramel (warm editorial accent) */
+  --color-secondary: var(--brand-secondary);
+
+  /* Accent - Mocha Brown (earthy, sophisticated) */
+  --color-accent: var(--brand-accent);
+
+  /* Warning - Muted Orange (unchanged) */
+  --color-warning: var(--brand-warning);
+
+  /* Dark - Espresso (replaces charcoal blue) */
+  --color-dark: var(--brand-dark);
+
+  /* Light - Warm Cream (editorial base) */
+  --color-light: var(--brand-light);
+
+  /* Background - Soft Ivory (unchanged, fits warm editorial) */
+  --color-background: var(--brand-background);
+
+  /* Aqua - Cool Mint (kept as contrast pop) */
+  --color-aqua: var(--brand-aqua);
+
+  /* Beige - Warm Linen (replaces cool blue-gray) */
+  --color-beige: var(--brand-beige);
 }
 
 .dark {
   color-scheme: dark;
+
+  /* Dark Mode — Midnight Amber */
+  --brand-primary: #EF9F27;
+  --brand-secondary: #BA7517;
+  --brand-accent: #FAC775;
+  --brand-warning: #DD6B20;
+  --brand-dark: #FAF0DC;
+  --brand-light: #2C2A1E;
+  --brand-background: #1A1A17;
+  --brand-aqua: #EF9F27;
+  --brand-beige: #2C2A1E;
+
+  --color-primary: var(--brand-primary);
+  --color-secondary: var(--brand-secondary);
+  --color-accent: var(--brand-accent);
+  --color-warning: var(--brand-warning);
+  --color-dark: var(--brand-dark);
+  --color-light: var(--brand-light);
+  --color-background: var(--brand-background);
+  --color-aqua: var(--brand-aqua);
+  --color-beige: var(--brand-beige);
 }
 
-/* Add these colors to Tailwind theme using @theme */
+/* Add colors to Tailwind theme */
 @theme {
   --color-primary: var(--color-primary);
   --color-secondary: var(--color-secondary);
