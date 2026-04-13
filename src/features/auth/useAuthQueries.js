@@ -31,6 +31,13 @@ const getStatusCode = (error) =>
   error?.response?.status || error?.statusCode || null;
 
 export const useBootstrapCurrentUserQuery = (enabled = true) => {
+  return useBootstrapCurrentUserQueryWithOptions(enabled, { clearOn401: true });
+};
+
+const useBootstrapCurrentUserQueryWithOptions = (
+  enabled = true,
+  { clearOn401 = true } = {}
+) => {
   const dispatch = useDispatch();
 
   const query = useQuery({
@@ -53,7 +60,11 @@ export const useBootstrapCurrentUserQuery = (enabled = true) => {
     if (!query.isError) return;
 
     if (getStatusCode(query.error) === 401) {
-      dispatch(clearAuthSession());
+      if (clearOn401) {
+        dispatch(clearAuthSession());
+      } else {
+        dispatch(setAuthChecked(true));
+      }
       return;
     }
 
@@ -62,6 +73,9 @@ export const useBootstrapCurrentUserQuery = (enabled = true) => {
 
   return query;
 };
+
+export const useBootstrapCurrentUserQuerySafe = (enabled = true) =>
+  useBootstrapCurrentUserQueryWithOptions(enabled, { clearOn401: false });
 
 export const useLoginMutation = () => {
   const dispatch = useDispatch();

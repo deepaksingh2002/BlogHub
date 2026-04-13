@@ -4,12 +4,12 @@ import { Button, Input, Logo } from "./index";
 import PasswordInput from "./PasswordInput";
 import { useForm } from "react-hook-form";
 import { getDashboardPathForUser } from "../utils/roleHelpers";
-import { useBootstrapCurrentUserQuery, useSignupMutation } from "../features/auth/useAuthQueries";
+import { useBootstrapCurrentUserQuerySafe, useSignupMutation } from "../features/auth/useAuthQueries";
 
 function Signup() {
   const navigate = useNavigate();
   const signupMutation = useSignupMutation();
-  const bootstrapQuery = useBootstrapCurrentUserQuery(false);
+  const bootstrapQuery = useBootstrapCurrentUserQuerySafe(false);
 
   const {
     register,
