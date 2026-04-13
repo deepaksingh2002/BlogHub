@@ -139,7 +139,7 @@ function Header({ isDarkMode, onToggleTheme }) {
                 <li key={item.name}>
                   <button
                     onClick={() => navigate(item.slug)}
-                    className="h-11 border-2 border-light bg-light text-dark font-bold px-4 rounded-xl hover:bg-beige hover:scale-[1.02] transition-all text-sm whitespace-nowrap"
+                    className="h-11 border-2 border-light bg-primary text-light font-bold px-4 rounded-xl hover:bg-primary/85 hover:scale-[1.02] transition-all text-sm whitespace-nowrap"
                   >
                     {item.name}
                   </button>
@@ -149,7 +149,7 @@ function Header({ isDarkMode, onToggleTheme }) {
             <li>
               <button
                 onClick={onToggleTheme}
-                className="h-11 w-11 border-2 border-light bg-light text-dark rounded-xl hover:bg-beige hover:scale-[1.02] transition-all flex items-center justify-center"
+                className="h-11 w-11 border-2 border-light bg-primary text-light rounded-xl hover:bg-primary/85 hover:scale-[1.02] transition-all flex items-center justify-center"
                 type="button"
                 aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
                 title={isDarkMode ? "Light mode" : "Dark mode"}

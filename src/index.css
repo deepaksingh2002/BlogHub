@@ -96,8 +96,38 @@ html:not(.dark) [class*="bg-gradient-to-"] {
   color: var(--color-dark) !important;
 }
 
+[class*="text-zinc-"],
+[class*="text-neutral-"],
+[class*="text-stone-"] {
+  color: var(--color-dark) !important;
+}
+
+.dark [class*="text-gray-"],
+.dark [class*="text-slate-"],
+.dark [class*="text-dark"] {
+  color: var(--color-dark) !important;
+}
+
+.dark [class*="text-light"] {
+  color: var(--color-dark) !important;
+}
+
+.dark [class*="text-zinc-"],
+.dark [class*="text-neutral-"],
+.dark [class*="text-stone-"],
+.dark [class*="text-black"],
+.dark [class*="text-white"] {
+  color: var(--color-dark) !important;
+}
+
 [class*="bg-gray-"],
 [class*="bg-slate-"] {
+  background-color: var(--color-light) !important;
+}
+
+[class*="bg-zinc-"],
+[class*="bg-neutral-"],
+[class*="bg-stone-"] {
   background-color: var(--color-light) !important;
 }
 
@@ -131,7 +161,22 @@ html:not(.dark) [class*="bg-gradient-to-"] {
 
 .dark [class*="bg-gray-"],
 .dark [class*="bg-slate-"] {
-  background-color: var(--color-light) !important;
+  background-color: var(--color-beige) !important;
+}
+
+.dark [class*="bg-light"] {
+  background-color: var(--color-beige) !important;
+}
+
+.dark [class*="bg-zinc-"],
+.dark [class*="bg-neutral-"],
+.dark [class*="bg-stone-"] {
+  background-color: var(--color-beige) !important;
+}
+
+.dark ::placeholder {
+  color: color-mix(in srgb, var(--color-dark) 70%, transparent) !important;
+  opacity: 1;
 }
 
 /* Remap repeated hardcoded hex utility classes to tokens. */

@@ -44,26 +44,32 @@
 .dark {
   color-scheme: dark;
 
-  /* Dark Mode — Midnight Amber */
-  --brand-primary: #EF9F27;
-  --brand-secondary: #BA7517;
-  --brand-accent: #FAC775;
-  --brand-warning: #DD6B20;
-  --brand-dark: #FAF0DC;
-  --brand-light: #2C2A1E;
-  --brand-background: #1A1A17;
-  --brand-aqua: #EF9F27;
-  --brand-beige: #2C2A1E;
+  /* Primary - Slate Blue */
+  --color-primary: #6C8196;
 
-  --color-primary: var(--brand-primary);
-  --color-secondary: var(--brand-secondary);
-  --color-accent: var(--brand-accent);
-  --color-warning: var(--brand-warning);
-  --color-dark: var(--brand-dark);
-  --color-light: var(--brand-light);
-  --color-background: var(--brand-background);
-  --color-aqua: var(--brand-aqua);
-  --color-beige: var(--brand-beige);
+  /* Secondary - Silver */
+  --color-secondary: #CBCBCB;
+
+  /* Accent - Graphite */
+  --color-accent: #5C5C5C;
+
+  /* Warning - Brighter orange for dark contrast */
+  --color-warning: #6C8196;
+
+  /* Dark - Cream (text color in dark mode) */
+  --color-dark: #94a2ae;
+
+  /* Light - Dark surface (cards, nav, inputs) */
+  --color-light: #242a30;
+
+  /* Background - Deep warm slate */
+  --color-background: #6b8aa736;
+
+  /* Aqua - Slate (accent on dark) */
+  --color-aqua: #2f39434b;
+
+  /* Beige - Same as light surface */
+  --color-beige: #eef5fcc9;
 }
 
 /* Add colors to Tailwind theme */
