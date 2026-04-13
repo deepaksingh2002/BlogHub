@@ -18,7 +18,7 @@ function Login() {
   } = useForm({
     mode: "onBlur",
     defaultValues: {
-      email: "",
+      credential: "",
       password: "",
     },
   });
@@ -31,7 +31,14 @@ function Login() {
     setLoading(true);
 
     try {
-      const loginResponse = await loginMutation.mutateAsync(data);
+      const credential = data.credential.trim();
+      const isEmail = credential.includes("@");
+      const loginPayload = {
+        password: data.password,
+        ...(isEmail ? { email: credential } : { username: credential }),
+      };
+
+      const loginResponse = await loginMutation.mutateAsync(loginPayload);
 
       // Start with the login payload, then try to hydrate from /currentUser.
       const loginUserPayload =
@@ -104,22 +111,27 @@ function Login() {
           <div className="space-y-5">
             <div>
               <Input
-                label="Email:"
+                label="Email or Username:"
                 placeholder="Enter your email or username"
-                type="email"
+                type="text"
                 disabled={loading}
-                {...register("email", {
-                  required: "Email is required",
+                {...register("credential", {
+                  required: "Email or username is required",
                   validate: {
-                    matchPattern: (value) =>
-                      /^([\w.\-_]+)?\w+@[\w-_]+(\.\w+){1,}$/.test(value) ||
-                      "Enter valid email",
+                    isValidCredential: (value) => {
+                      const trimmed = value.trim();
+                      if (!trimmed) return "Email or username is required";
+                      if (!trimmed.includes("@")) return true;
+                      return /^([^\s@]+)@([^\s@]+)\.([^\s@]+)$/.test(trimmed)
+                        ? true
+                        : "Enter a valid email";
+                    },
                   },
                 })}
               />
-              {errors.email && (
+              {errors.credential && (
                 <p className="text-warning text-xs mt-1 font-medium">
-                  {errors.email.message}
+                  {errors.credential.message}
                 </p>
               )}
             </div>

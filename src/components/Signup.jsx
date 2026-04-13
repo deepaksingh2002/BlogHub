@@ -29,6 +29,7 @@ function Signup() {
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState("");
   const password = watch("password");
+  const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
   const handleSignup = async (data) => {
     setServerError("");
@@ -138,7 +139,10 @@ function Signup() {
               disabled={loading}
               {...register("password", {
                 required: "Password is required",
-                minLength: { value: 6, message: "Min 6 characters" },
+                minLength: { value: 8, message: "Minimum 8 characters" },
+                validate: (value) =>
+                  strongPasswordRegex.test(value) ||
+                  "Use uppercase, lowercase, number, and special character",
               })}
             />
             {errors.password && (
