@@ -1,81 +1,92 @@
-﻿import React, { useEffect, useCallback, useState } from "react";
+import React, { useEffect, useCallback, useState } from "react";
 import parse from "html-react-parser";
-import { useSelector, useDispatch } from "react-redux";
+import { HiCheckBadge } from "react-icons/hi2";
+import { useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import {
-  getPostById,
-  deletePost,
-  togglePostLike,
-  getPostComments,
-  createComment,
-  updateComment,
-  deleteComment as deleteCommentThunk,
-  toggleCommentLike,
-} from "../features/post/postThunks";
-import {
-  selectPostById,
-  selectPostLoading,
-  selectPostError,
-} from "../features/post/postSlice";
 import {
   selectAuthUser,
   selectIsAuthenticated,
 } from "../features/auth/authSlice";
-import { Contaner } from "../components";
+import { Container } from "../components";
+import {
+  useCreateCommentMutation,
+  useDeleteCommentMutation,
+  usePostCommentsQuery,
+  usePostQuery,
+  useToggleCommentLikeMutation,
+  useTogglePostLikeMutation,
+  useUpdateCommentMutation,
+} from "../features/post/usePostQueries";
 import {
   formatDisplayDate,
   getPostLikesCount,
   getPostOwner,
   getUserDisplayName,
   getUserId,
+  isVerifiedAuthor,
   resolvePostCategory,
 } from "../utils/postHelpers";
 
+const toBooleanFlag = (value) => {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "yes", "y"].includes(normalized)) return true;
+    if (["false", "0", "no", "n", ""].includes(normalized)) return false;
+  }
+  return undefined;
+};
+
 function Post() {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
   const { postId } = useParams();
 
-  const post = useSelector((state) => selectPostById(state, postId));
-  const loading = useSelector(selectPostLoading);
-  const error = useSelector(selectPostError);
+  const {
+    data: post,
+    isLoading: postLoading,
+    isFetched: postRequestDone,
+    error,
+  } = usePostQuery(postId);
+  const { data: rawComments = [], refetch: refetchComments } = usePostCommentsQuery(postId);
+  const togglePostLikeMutation = useTogglePostLikeMutation();
+  const createCommentMutation = useCreateCommentMutation();
+  const updateCommentMutation = useUpdateCommentMutation();
+  const deleteCommentMutation = useDeleteCommentMutation();
+  const toggleCommentLikeMutation = useToggleCommentLikeMutation();
+
   const currentUser = useSelector(selectAuthUser);
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const currentUserId = getUserId(currentUser);
   const postOwner = getPostOwner(post);
-  const hasPostOwner = Boolean(post?.owner || post?.author || post?.user);
+  const isPostOwnerVerified = isVerifiedAuthor(postOwner);
 
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingText, setEditingText] = useState("");
-  const [postRequestDone, setPostRequestDone] = useState(false);
-  const [postRequestLoading, setPostRequestLoading] = useState(true);
   const [isLikeSubmitting, setIsLikeSubmitting] = useState(false);
+  const [likePulse, setLikePulse] = useState(false);
   const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
   const [actionError, setActionError] = useState("");
   const [copiedLink, setCopiedLink] = useState(false);
 
-  const isOwner =
-    isAuthenticated &&
-    getUserId(postOwner) &&
-    getUserId(postOwner) === currentUserId;
-
   const likesCount = getPostLikesCount(post);
-  const isLiked = Boolean(
-    post?.isLiked ??
-      post?.liked ??
-      post?.likedByCurrentUser ??
-      (Array.isArray(post?.likes) && currentUserId
-        ? post.likes.some((like) => {
-            const likeId =
-              typeof like === "string"
-                ? like
-                : like?._id || like?.id || like?.userId || like?.owner?._id;
-            return likeId === currentUserId;
-          })
-        : false)
-  );
+  const explicitLiked =
+    toBooleanFlag(post?.isLiked) ??
+    toBooleanFlag(post?.liked) ??
+    toBooleanFlag(post?.likedByCurrentUser);
+  const derivedLikedFromArray =
+    Array.isArray(post?.likes) && currentUserId
+      ? post.likes.some((like) => {
+          const likeId =
+            typeof like === "string"
+              ? like
+              : like?._id || like?.id || like?.userId || like?.owner?._id;
+          return likeId === currentUserId;
+        })
+      : false;
+  const isLiked = explicitLiked ?? derivedLikedFromArray;
   const plainTextContent = String(post?.content || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
   const wordCount = plainTextContent ? plainTextContent.split(" ").length : 0;
   const readTimeMinutes = Math.max(1, Math.ceil(wordCount / 220));
@@ -111,7 +122,7 @@ function Post() {
       likes:
         comment?.likesCount ??
         (Array.isArray(comment?.likes) ? comment.likes.length : Number(comment?.likes) || 0),
-      liked: Boolean(comment?.isLiked ?? comment?.liked ?? false),
+      liked: toBooleanFlag(comment?.isLiked) ?? toBooleanFlag(comment?.liked) ?? false,
     }));
   };
 
@@ -127,63 +138,48 @@ function Post() {
     return normalized;
   };
 
-  const fetchPost = useCallback(async () => {
+  const loadComments = useCallback(async () => {
+    try {
+      const result = await refetchComments();
+      setComments(normalizeComments(result.data));
+    } catch {
+      // Keep last known comments to avoid empty flicker on transient API failures.
+    }
+  }, [refetchComments]);
+
+  useEffect(() => {
     if (!postId) {
       navigate("/");
       return;
     }
-    await dispatch(getPostById(postId)).unwrap();
-  }, [postId, dispatch, navigate]);
-
-  // Initial comment fetch (and re-fetch after edit/delete when needed).
-  const loadComments = useCallback(async () => {
-    if (!postId) return;
-    try {
-      const response = await dispatch(getPostComments(postId)).unwrap();
-      setComments(normalizeComments(response));
-    } catch {
-      // Keep last known comments to avoid empty flicker on transient API failures.
-    }
-  }, [dispatch, postId]);
+    setComments(normalizeComments(rawComments));
+  }, [postId, rawComments, navigate]);
 
   useEffect(() => {
-    let active = true;
-    const loadData = async () => {
-      setPostRequestLoading(true);
-      setPostRequestDone(false);
-      try {
-        await fetchPost();
-      } catch {
-        // handled by slice error
+    if (document.getElementById("post-like-animations")) return;
+
+    const style = document.createElement("style");
+    style.id = "post-like-animations";
+    style.textContent = `
+      @keyframes like-pop {
+        0% { transform: scale(1); }
+        40% { transform: scale(1.2) rotate(-4deg); }
+        65% { transform: scale(0.96) rotate(2deg); }
+        100% { transform: scale(1); }
       }
-      await loadComments();
-      if (!active) return;
-      setPostRequestLoading(false);
-      setPostRequestDone(true);
-    };
-
-    loadData();
-
-    return () => {
-      active = false;
-    };
-  }, [fetchPost, loadComments]);
-
-  const handleDelete = async () => {
-    if (!post?._id || !isOwner) return;
-    if (!window.confirm("Delete this post permanently?")) return;
-    try {
-      await dispatch(deletePost(post._id)).unwrap();
-      navigate("/all-post");
-    } catch (err) {
-      alert(err?.message || "Delete failed");
-    }
-  };
-
-  const handleEdit = () => {
-    if (!post?._id) return;
-    navigate(`/edit-post/${post._id}`);
-  };
+      @keyframes like-glow {
+        0% { box-shadow: 0 0 0 0 rgba(242, 106, 27, 0.55); }
+        70% { box-shadow: 0 0 0 14px rgba(242, 106, 27, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(242, 106, 27, 0); }
+      }
+      @keyframes like-float {
+        0% { opacity: 0; transform: translateY(0) scale(0.6); }
+        30% { opacity: 1; }
+        100% { opacity: 0; transform: translateY(-18px) scale(1.1); }
+      }
+    `;
+    document.head.appendChild(style);
+  }, []);
 
   const handleLike = async () => {
     if (!post?._id) return;
@@ -194,7 +190,9 @@ function Post() {
     setActionError("");
     setIsLikeSubmitting(true);
     try {
-      await dispatch(togglePostLike(post._id)).unwrap();
+      await togglePostLikeMutation.mutateAsync(post._id);
+      setLikePulse(true);
+      window.setTimeout(() => setLikePulse(false), 560);
     } catch (err) {
       const message =
         typeof err === "string"
@@ -218,7 +216,7 @@ function Post() {
     setActionError("");
     setIsCommentSubmitting(true);
     try {
-      const created = await dispatch(createComment({ postId: post?._id || postId, content })).unwrap();
+      const created = await createCommentMutation.mutateAsync({ postId: post?._id || postId, content });
       const normalized = normalizeSingleComment(created);
       if (normalized?.id) {
         setComments((prev) => [normalized, ...prev.filter((item) => item.id !== normalized.id)]);
@@ -256,7 +254,7 @@ function Post() {
     );
 
     try {
-      await dispatch(toggleCommentLike(commentId)).unwrap();
+      await toggleCommentLikeMutation.mutateAsync({ commentId, postId: post?._id || postId });
     } catch (err) {
       setComments(snapshot);
       const message =
@@ -291,7 +289,7 @@ function Post() {
     const content = editingText.trim();
     if (!content) return;
     try {
-      await dispatch(updateComment({ commentId, content })).unwrap();
+      await updateCommentMutation.mutateAsync({ commentId, content, postId: post?._id || postId });
       cancelEditComment();
       await loadComments();
     } catch {
@@ -302,30 +300,30 @@ function Post() {
   const handleDeleteComment = async (commentId) => {
     if (!window.confirm("Delete this comment?")) return;
     try {
-      await dispatch(deleteCommentThunk(commentId)).unwrap();
+      await deleteCommentMutation.mutateAsync({ commentId, postId: post?._id || postId });
       await loadComments();
     } catch {
       alert("Failed to delete comment.");
     }
   };
 
-  if ((postRequestLoading || loading) && !post) {
+  if (postLoading && !post) {
     return (
       <main className="min-h-screen pt-32 pb-16 bg-gray-50 dark:bg-slate-900">
-        <Contaner>
+        <Container>
           <div className="max-w-3xl mx-auto text-center space-y-12 py-20">
             <div className="w-20 h-20 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto"></div>
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-slate-100">Loading post...</h1>
           </div>
-        </Contaner>
+        </Container>
       </main>
     );
   }
 
-  if ((postRequestDone && !post) || (error && !post && !postRequestLoading)) {
+  if ((postRequestDone && !post) || (error && !post && !postLoading)) {
     return (
       <main className="min-h-screen pt-32 pb-16 bg-gray-50 dark:bg-slate-900">
-        <Contaner>
+        <Container>
           <div className="max-w-2xl mx-auto text-center py-20 space-y-8">
             <div className="w-24 h-24 mx-auto bg-red-50 border-4 border-red-100 rounded-2xl flex items-center justify-center dark:bg-red-950/30 dark:border-red-900">
               <svg className="w-12 h-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -342,14 +340,14 @@ function Post() {
               </button>
             </Link>
           </div>
-        </Contaner>
+        </Container>
       </main>
     );
   }
 
   return (
-    <main className="pt-32 pb-16 bg-gradient-to-b from-gray-50 via-white to-gray-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
-      <Contaner>
+    <main className="pt-32 pb-16 bg-linear-to-b from-gray-50 via-white to-gray-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
+      <Container>
         <article className="max-w-4xl mx-auto">
           <nav className="text-sm text-gray-500 mb-8 flex items-center gap-2 dark:text-slate-400">
             <Link to="/all-post" className="hover:text-primary transition-colors">Posts</Link>
@@ -385,10 +383,15 @@ function Post() {
                 <span className="inline-flex items-center h-9 rounded-full border border-gray-300 px-4 dark:border-slate-600">
                   {readTimeMinutes} min read
                 </span>
-                {hasPostOwner && (
+                {Boolean(post?.owner || post?.author || post?.user) && (
                   <span className="inline-flex items-center gap-2 h-9 rounded-full border border-gray-300 px-4 dark:border-slate-600">
                     <div className="w-5 h-5 bg-gray-300 rounded-full dark:bg-slate-600"></div>
-                    {getUserDisplayName(postOwner)}
+                    <span className="inline-flex items-center gap-1">
+                      {getUserDisplayName(postOwner)}
+                      {isPostOwnerVerified && (
+                        <HiCheckBadge className="w-4 h-4 text-primary" title="Verified author" />
+                      )}
+                    </span>
                   </span>
                 )}
               </div>
@@ -398,17 +401,51 @@ function Post() {
                   <button
                     onClick={handleLike}
                     disabled={isLikeSubmitting}
-                    className={`inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl text-sm font-semibold transition-all disabled:opacity-60 disabled:cursor-not-allowed ${
+                    style={
+                      likePulse
+                        ? {
+                            animation: "like-pop 560ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+                            backgroundColor: isLiked ? "var(--color-primary)" : undefined,
+                            borderColor: isLiked ? "var(--color-primary)" : undefined,
+                            boxShadow: isLiked ? "0 12px 28px rgba(242, 106, 27, 0.28)" : undefined,
+                          }
+                        : isLiked
+                          ? {
+                              backgroundColor: "var(--color-primary)",
+                              borderColor: "var(--color-primary)",
+                              boxShadow: "0 10px 24px rgba(242, 106, 27, 0.22)",
+                            }
+                          : undefined
+                    }
+                    className={`relative inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl text-sm font-semibold transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed overflow-hidden ${
                       isLiked
-                        ? "bg-rose-500 text-white hover:bg-rose-600"
+                        ? "text-white border border-transparent hover:brightness-95"
                         : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-700"
                     }`}
                     type="button"
                   >
-                    <svg className="w-4 h-4" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                    {likePulse && isLiked && (
+                      <span className="pointer-events-none absolute inset-0 rounded-xl bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.35),transparent_58%)] animate-[like-glow_560ms_ease-out]" />
+                    )}
+                    <svg
+                      className={`relative z-10 w-4 h-4 transition-transform duration-300 ${
+                        isLiked ? "scale-110 drop-shadow-sm" : ""
+                      } ${likePulse ? "rotate-[-8deg] scale-125" : ""}`}
+                      fill={isLiked ? "currentColor" : "none"}
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
-                    <span>{isLikeSubmitting ? "Updating..." : `${likesCount} Like${likesCount === 1 ? "" : "s"}`}</span>
+                    <span className="relative z-10">
+                      {`${likesCount} Like${likesCount === 1 ? "" : "s"}`}
+                    </span>
+                    {likePulse && isLiked && (
+                      <span className="pointer-events-none absolute -top-2 right-4 z-0 h-2 w-2 rounded-full bg-white/90 animate-[like-float_560ms_ease-out]" />
+                    )}
+                    {likePulse && isLiked && (
+                      <span className="pointer-events-none absolute -bottom-1 left-5 z-0 h-1.5 w-1.5 rounded-full bg-white/80 animate-[like-float_560ms_ease-out_80ms]" />
+                    )}
                   </button>
                   <button
                     type="button"
@@ -422,28 +459,6 @@ function Post() {
                   </button>
                 </div>
 
-                {isOwner && (
-                  <div className="flex gap-3">
-                    <button
-                      onClick={handleEdit}
-                      className="inline-flex items-center justify-center gap-2 h-11 px-5 bg-primary/90 hover:bg-primary text-white rounded-xl text-sm font-semibold shadow hover:shadow-md transition-all duration-200"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                      Edit
-                    </button>
-                    <button
-                      onClick={handleDelete}
-                      className="inline-flex items-center justify-center gap-2 h-11 px-5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold shadow hover:shadow-md transition-all duration-200"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                      Delete
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           </section>
@@ -581,7 +596,7 @@ function Post() {
             </Link>
           </div>
         </article>
-      </Contaner>
+      </Container>
     </main>
   );
 }

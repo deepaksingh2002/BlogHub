@@ -1,52 +1,36 @@
-import React, { useEffect, useCallback } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { getAllPosts } from "../features/post/postThunks";
-import {
-  selectAllPosts,
-  selectPostLoading,
-  selectPostError,
-} from "../features/post/postSlice";
-import { Contaner, PostListCard } from "../components";
+import React, { useCallback } from "react";
+import { usePostsQuery } from "../features/post/usePostQueries";
+import { Container, PostListCard } from "../components";
 
 function PostsList() {
-  const dispatch = useDispatch();
-
-  const posts = useSelector(selectAllPosts);
-  const loading = useSelector(selectPostLoading);
-  const error = useSelector(selectPostError);
-
-  const handleFetchPosts = useCallback(() => {
-    dispatch(getAllPosts());
-  }, [dispatch]);
-
-// Retry fetching posts after error
+  const {
+    data: posts = [],
+    isLoading: loading,
+    error,
+    refetch,
+  } = usePostsQuery();
 
   const handleRetry = useCallback(() => {
-    handleFetchPosts();
-  }, [handleFetchPosts]);
-
- // LIFECYCLE - FETCH POSTS ON MOUNT
-  useEffect(() => {
-    handleFetchPosts();
-  }, [handleFetchPosts]);
+    refetch();
+  }, [refetch]);
 
  
 
   // STATE 1: LOADING 
   if (loading) {
     return (
-      <div className="w-full py-36 flex items-center justify-center min-h-screen bg-white dark:bg-slate-900">
+      <div className="w-full py-36 flex items-center justify-center min-h-screen bg-background dark:bg-background">
         <div className="text-center">
           {/* Animated Spinner */}
           <div className="flex justify-center mb-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-blue-500"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-secondary/30 border-t-primary"></div>
           </div>
 
           {/* Loading Message */}
-          <h1 className="text-lg font-semibold text-gray-700 dark:text-slate-100">
+          <h1 className="text-lg font-semibold text-dark dark:text-dark">
             Loading posts...
           </h1>
-          <p className="text-gray-500 text-sm mt-2 dark:text-slate-400">Please wait</p>
+          <p className="text-dark/60 text-sm mt-2 dark:text-dark/60">Please wait</p>
         </div>
       </div>
     );
@@ -55,15 +39,15 @@ function PostsList() {
  
   if (error) {
     return (
-      <div className="w-full py-12 flex items-center justify-center min-h-screen bg-white dark:bg-slate-900">
+      <div className="w-full py-12 flex items-center justify-center min-h-screen bg-background dark:bg-background">
         <div className="w-full max-w-md">
           {/* Error Container */}
-          <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-6 shadow-sm dark:bg-red-950/30">
+          <div className="bg-warning/10 border-l-4 border-warning rounded-lg p-6 shadow-sm">
             {/* Error Icon */}
             <div className="flex items-start">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <svg
-                  className="h-6 w-6 text-red-500"
+                  className="h-6 w-6 text-warning"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -80,18 +64,18 @@ function PostsList() {
 
               {/* Error Content */}
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800 dark:text-red-300">
+                <h3 className="text-sm font-medium text-warning">
                   Failed to load posts
                 </h3>
-                <div className="mt-2 text-sm text-red-700 dark:text-red-300">
-                  <p>{error}</p>
+                <div className="mt-2 text-sm text-warning">
+                  <p>{error?.message || "Failed to load posts"}</p>
                 </div>
 
                 {/* Retry Button */}
                 <div className="mt-4">
                   <button
                     onClick={handleRetry}
-                    className="inline-flex items-center px-4 py-2 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    className="inline-flex items-center px-4 py-2 bg-warning text-light font-medium rounded-lg hover:opacity-90 transition duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-warning focus:ring-offset-2"
                     aria-label="Retry loading posts"
                   >
                     <svg
@@ -121,12 +105,12 @@ function PostsList() {
   // EMPTY 
   if (!posts || posts.length === 0) {
     return (
-      <div className="w-full py-36 flex items-center justify-center min-h-screen bg-white dark:bg-slate-900">
+      <div className="w-full py-36 flex items-center justify-center min-h-screen bg-background dark:bg-background">
         <div className="w-full max-w-md text-center">
           {/* Empty State Icon */}
           <div className="flex justify-center mb-4">
             <svg
-              className="w-16 h-16 text-gray-400"
+              className="w-16 h-16 text-secondary"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -142,10 +126,10 @@ function PostsList() {
           </div>
 
           {/* Empty State Text */}
-          <p className="text-gray-700 text-lg font-semibold dark:text-slate-100">
+          <p className="text-dark text-lg font-semibold dark:text-dark">
             No posts found
           </p>
-          <p className="text-gray-500 text-sm mt-2 dark:text-slate-400">
+          <p className="text-dark/60 text-sm mt-2 dark:text-dark/60">
             Check back later for new content
           </p>
 
@@ -153,7 +137,7 @@ function PostsList() {
           <div className="mt-6">
             <a
               href="/add-post"
-              className="inline-flex items-center px-4 py-2 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition duration-200"
+              className="inline-flex items-center px-4 py-2 bg-primary text-light font-medium rounded-lg hover:opacity-90 transition duration-200"
             >
               <svg
                 className="h-5 w-5 mr-2"
@@ -179,8 +163,8 @@ function PostsList() {
   // SUCCESS - DISPLAY POSTS
 
   return (
-    <div className="w-full pt-32 pb-20 bg-[#f4f4f5] dark:bg-slate-900">
-      <Contaner>
+    <div className="w-full pt-32 pb-20 bg-background dark:bg-background">
+      <Container>
         <div className="max-w-6xl mx-auto">
           <div>
           {posts.map((post) => (
@@ -193,7 +177,7 @@ function PostsList() {
           ))}
           </div>
         </div>
-      </Contaner>
+      </Container>
     </div>
   );
 }

@@ -1,17 +1,23 @@
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { useDispatch } from "react-redux";
-import { createPost, updatePost, deletePost } from "../../features/post/postThunks";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { selectPostLoading } from "../../features/post/postSlice";
+import {
+  useCreatePostMutation,
+  useDeletePostMutation,
+  useUpdatePostMutation,
+} from "../../features/post/usePostQueries";
 import RTE from "../RTE";
 import LoadingAnimation from "../Animation/LoadingAnimation";
 
 export default function PostForm({ post }) {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const loading = useSelector(selectPostLoading);
+  const createPostMutation = useCreatePostMutation();
+  const updatePostMutation = useUpdatePostMutation();
+  const deletePostMutation = useDeletePostMutation();
+  const loading =
+    createPostMutation.isPending ||
+    updatePostMutation.isPending ||
+    deletePostMutation.isPending;
 
   const {
     register,
@@ -47,9 +53,9 @@ export default function PostForm({ post }) {
       }
 
       if (post?._id) {
-        await dispatch(updatePost({ postId: post._id, formData })).unwrap();
+        await updatePostMutation.mutateAsync({ postId: post._id, formData });
       } else {
-        await dispatch(createPost(formData)).unwrap();
+        await createPostMutation.mutateAsync(formData);
         reset(); // Clear form after create
       }
 
@@ -63,7 +69,7 @@ export default function PostForm({ post }) {
   const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to delete this post?")) return;
     try {
-      await dispatch(deletePost(post._id)).unwrap();
+      await deletePostMutation.mutateAsync(post._id);
       navigate("/all-post");
     } catch (err) {
       alert(err?.message || "Delete failed!");
@@ -71,14 +77,14 @@ export default function PostForm({ post }) {
   };
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 py-8 px-4 rounded-3xl border border-gray-200 dark:border-slate-700">
+    <div className="bg-background dark:bg-background py-8 px-4 rounded-3xl border border-secondary/20">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-black text-black dark:text-slate-100 mb-4 bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent animate-slide-up">
+          <h1 className="text-4xl md:text-5xl font-black text-primary mb-4 animate-slide-up">
             {post ? "Edit Post" : "Create Post"}
           </h1>
-          <p className="text-xl text-black/70 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl text-dark/70 dark:text-dark/70 max-w-2xl mx-auto leading-relaxed">
             {post ? "Update your story" : "Share your story with the world"}
           </p>
         </div>
@@ -86,12 +92,12 @@ export default function PostForm({ post }) {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Title */}
           <div>
-            <label className="block text-sm font-bold text-black dark:text-slate-100 mb-2">Post Title</label>
+            <label className="block text-sm font-bold text-dark dark:text-dark mb-2">Post Title</label>
             <input
-              className={`w-full px-5 py-4 rounded-2xl border-2 bg-white/50 dark:bg-slate-800/70 text-gray-900 dark:text-slate-100 backdrop-blur-sm shadow-lg focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all duration-300 text-lg font-semibold ${
+              className={`w-full px-5 py-4 rounded-2xl border-2 bg-light/70 dark:bg-light/80 text-dark dark:text-dark backdrop-blur-sm shadow-lg focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all duration-300 text-lg font-semibold ${
                 errors.title 
-                  ? 'border-red-300 bg-red-50/50 dark:bg-red-950/20' 
-                  : 'border-primary/20 hover:border-primary/40 focus:border-primary dark:border-slate-700'
+                  ? 'border-warning/40 bg-warning/10' 
+                  : 'border-primary/20 hover:border-primary/40 focus:border-primary'
               }`}
               placeholder="Enter a compelling title for your post..."
               {...register("title", { 
@@ -100,18 +106,18 @@ export default function PostForm({ post }) {
               })}
             />
             {errors.title && (
-              <p className="mt-2 text-sm text-red-500 font-medium">{errors.title.message}</p>
+              <p className="mt-2 text-sm text-warning font-medium">{errors.title.message}</p>
             )}
           </div>
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-bold text-black dark:text-slate-100 mb-2">Category</label>
+            <label className="block text-sm font-bold text-dark dark:text-dark mb-2">Category</label>
             <select
-              className={`w-full px-5 py-4 rounded-2xl border-2 bg-white/50 dark:bg-slate-800/70 text-gray-900 dark:text-slate-100 backdrop-blur-sm shadow-lg focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all duration-300 text-lg font-semibold appearance-none bg-no-repeat bg-right pr-10 ${
+              className={`w-full px-5 py-4 rounded-2xl border-2 bg-light/70 dark:bg-light/80 text-dark dark:text-dark backdrop-blur-sm shadow-lg focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all duration-300 text-lg font-semibold appearance-none bg-no-repeat bg-right pr-10 ${
                 errors.category
-                  ? 'border-red-300 bg-red-50/50 dark:bg-red-950/20'
-                  : 'border-primary/20 hover:border-primary/40 focus:border-primary dark:border-slate-700'
+                  ? 'border-warning/40 bg-warning/10'
+                  : 'border-primary/20 hover:border-primary/40 focus:border-primary'
               }`}
               {...register("category", { required: "Please select a category" })}
             >
@@ -126,13 +132,13 @@ export default function PostForm({ post }) {
               <option value="Business">Business</option>
             </select>
             {errors.category && (
-              <p className="mt-2 text-sm text-red-500 font-medium">{errors.category.message}</p>
+              <p className="mt-2 text-sm text-warning font-medium">{errors.category.message}</p>
             )}
           </div>
 
           {/* Content */}
           <div>
-            <label className="block text-sm font-bold text-black dark:text-slate-100 mb-2">Content</label>
+            <label className="block text-sm font-bold text-dark dark:text-dark mb-2">Content</label>
             <RTE 
               name="content" 
               label="Write your story..." 
@@ -140,14 +146,14 @@ export default function PostForm({ post }) {
               rules={{ required: "Content is required" }}
             />
             {errors.content && (
-              <p className="mt-2 text-sm text-red-500 font-medium">{errors.content.message}</p>
+              <p className="mt-2 text-sm text-warning font-medium">{errors.content.message}</p>
             )}
           </div>
 
           {/* Thumbnail */}
           <div>
-            <label className="block text-sm font-bold text-black dark:text-slate-100 mb-2">Thumbnail Image (Optional)</label>
-            <div className="relative border-2 border-dashed border-primary/20 dark:border-slate-700 bg-white/50 dark:bg-slate-800/70 backdrop-blur-sm rounded-2xl p-8 text-center hover:border-primary/40 transition-all duration-300 group">
+            <label className="block text-sm font-bold text-dark dark:text-dark mb-2">Thumbnail Image (Optional)</label>
+            <div className="relative border-2 border-dashed border-primary/20 bg-light/70 backdrop-blur-sm rounded-2xl p-8 text-center hover:border-primary/40 transition-all duration-300 group">
               <input
                 type="file"
                 accept="image/*"
@@ -160,8 +166,8 @@ export default function PostForm({ post }) {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <p className="text-lg font-semibold text-black dark:text-slate-100 group-hover:text-primary transition-colors">Click to upload image</p>
-                <p className="text-sm text-black/60 dark:text-slate-400">PNG, JPG up to 5MB</p>
+                <p className="text-lg font-semibold text-dark dark:text-dark group-hover:text-primary transition-colors">Click to upload image</p>
+                <p className="text-sm text-dark/60 dark:text-dark/60">PNG, JPG up to 5MB</p>
               </div>
             </div>
           </div>
@@ -197,7 +203,7 @@ export default function PostForm({ post }) {
                 type="button"
                 onClick={handleDelete}
                 disabled={loading}
-                className="px-8 py-5 bg-gradient-to-r from-red-500 to-red-600 text-white font-black rounded-2xl shadow-xl hover:shadow-red-400 hover:-translate-y-1 transition-all duration-500 border border-red-500/20 hover:border-red-500 text-lg flex items-center justify-center"
+                className="px-8 py-5 bg-warning text-light font-black rounded-2xl shadow-xl hover:shadow-warning/40 hover:-translate-y-1 transition-all duration-500 border border-warning/20 hover:border-warning text-lg flex items-center justify-center"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

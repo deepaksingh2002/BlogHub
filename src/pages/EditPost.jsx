@@ -1,22 +1,16 @@
 import React, { useEffect } from "react";
-import { Contaner, PostForm } from "../components";
-import { getPostById } from "../features/post/postThunks";
+import { Container, PostForm } from "../components";
 import { useNavigate, useParams } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  selectPostById,
-  selectPostError,
-  selectPostLoading,
-} from "../features/post/postSlice";
+import { usePostQuery } from "../features/post/usePostQueries";
 
 function EditPost() {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
   const { postId } = useParams();
-
-  const post = useSelector((state) => selectPostById(state, postId));
-  const loading = useSelector(selectPostLoading);
-  const error = useSelector(selectPostError);
+  const {
+    data: post,
+    isLoading: loading,
+    error,
+  } = usePostQuery(postId);
 
   useEffect(() => {
     if (!postId) {
@@ -24,23 +18,22 @@ function EditPost() {
       return;
     }
 
-    dispatch(getPostById(postId));
-  }, [postId, dispatch, navigate]);
+  }, [postId, navigate]);
 
-  if (loading && !post) return <div className="text-center py-8 text-gray-700 dark:text-slate-200">Loading...</div>;
+  if (loading && !post) return <div className="text-center py-8 text-dark dark:text-dark">Loading...</div>;
   if (!loading && !post) {
     return (
-      <div className="text-center py-8 text-red-500 dark:text-red-300">
-        {error || "Post not found"}
+      <div className="text-center py-8 text-warning">
+        {error?.message || "Post not found"}
       </div>
     );
   }
 
   return (
-    <div className="pt-32 pb-16 min-h-screen bg-gray-50 dark:bg-slate-900">
-      <Contaner>
+    <div className="pt-32 pb-16 min-h-screen bg-background dark:bg-background">
+      <Container>
         <PostForm post={post} />
-      </Contaner>
+      </Container>
     </div>
   );
 }
