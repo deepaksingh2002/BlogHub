@@ -1,20 +1,16 @@
 import React, { useEffect, useRef } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { getAllPosts } from "../features/post/postThunks";
 import { Link } from "react-router-dom";
-import { 
-  selectAllPosts, 
-  selectPostLoading,
-  selectPostError,
-} from "../features/post/postSlice";
-import { Contaner, PostCard, LoadingAnimation, Logo } from "../components";
+import { usePostsQuery } from "../features/post/usePostQueries";
+import { Container, PostCard, LoadingAnimation, Logo } from "../components";
 
 function Home() {
-  const dispatch = useDispatch();
   const hasFetched = useRef(false);
-  const posts = useSelector(selectAllPosts);
-  const loading = useSelector(selectPostLoading);
-  const error = useSelector(selectPostError);
+  const {
+    data: posts = [],
+    isLoading: loading,
+    error,
+    refetch,
+  } = usePostsQuery();
   const [initialFetchDone, setInitialFetchDone] = React.useState(false);
   
   // Show only FIRST 4 posts in ONE ROW
@@ -22,12 +18,12 @@ function Home() {
 
   useEffect(() => {
     if (!hasFetched.current) {
-      dispatch(getAllPosts()).finally(() => {
+      refetch().finally(() => {
         setInitialFetchDone(true);
       });
       hasFetched.current = true;
     }
-  }, [dispatch]);
+  }, [refetch]);
 
   // Smooth animations - single color focus
   useEffect(() => {
@@ -48,7 +44,7 @@ function Home() {
 
   if (!initialFetchDone && loading && featuredPosts.length === 0) {
     return (
-      <div className="w-full pt-32 min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-white dark:from-slate-900 dark:to-slate-950">
+      <div className="w-full pt-32 min-h-screen flex items-center justify-center bg-background dark:bg-background">
         <div className="text-center space-y-8">
           <div className="w-24 h-24 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto border-2 border-primary/20 animate-gentle-pulse">
               <div className="w-12 h-12 bg-primary/30 rounded-xl animate-pulse flex items-center justify-center">
@@ -56,7 +52,7 @@ function Home() {
               </div>
             </div>
             <LoadingAnimation type="spinner" size="lg" color="primary" />
-            <h1 className="text-2xl font-bold text-black/80 dark:text-slate-100">Loading Stories...</h1>
+            <h1 className="text-2xl font-bold text-dark/80 dark:text-light">Loading Stories...</h1>
           </div>
         </div>
       );
@@ -64,73 +60,73 @@ function Home() {
 
   if (initialFetchDone && error && featuredPosts.length === 0) {
     return (
-      <div className="w-full pt-32 min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-slate-900 dark:to-slate-950">
-        <Contaner>
-          <div className="max-w-xl mx-auto rounded-3xl border border-red-200 bg-red-50 p-8 text-center dark:border-red-900 dark:bg-red-950/30">
-            <h2 className="text-2xl font-black text-red-700 dark:text-red-300">Unable to load posts</h2>
-            <p className="mt-2 text-red-600 dark:text-red-400">{error}</p>
+      <div className="w-full pt-32 min-h-screen bg-background dark:bg-background">
+        <Container>
+          <div className="max-w-xl mx-auto rounded-3xl border border-warning/20 bg-light/90 p-8 text-center dark:border-warning/30 dark:bg-dark/80">
+            <h2 className="text-2xl font-black text-warning dark:text-accent">Unable to load posts</h2>
+            <p className="mt-2 text-dark/70 dark:text-light/80">{error?.message || "Failed to load posts"}</p>
             <button
               type="button"
-              onClick={() => dispatch(getAllPosts())}
-              className="mt-5 inline-flex h-11 items-center rounded-xl bg-red-600 px-5 font-semibold text-white hover:bg-red-700"
+              onClick={() => refetch()}
+              className="mt-5 inline-flex h-11 items-center rounded-xl bg-primary px-5 font-semibold text-light hover:bg-primary/90"
             >
               Retry
             </button>
           </div>
-        </Contaner>
+        </Container>
       </div>
     );
   }
 
   if (featuredPosts.length === 0) {
     return (
-      <div className="w-full pt-32 min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
-        <Contaner className="relative">
+      <div className="w-full pt-32 min-h-screen bg-background dark:bg-background">
+        <Container className="relative">
           <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4">
             <div className="w-32 h-32 bg-primary/5 backdrop-blur-xl rounded-3xl flex items-center justify-center mb-12 border border-primary/10 animate-float shadow-xl">
               <div className="w-20 h-20 bg-primary/20 rounded-2xl border-2 border-primary/30 flex items-center justify-center animate-gentle-pulse">
                 <Logo width="40px" />
               </div>
             </div>
-            <h1 className="text-5xl md:text-7xl font-black text-black mb-8 leading-tight dark:text-slate-100">
+            <h1 className="text-5xl md:text-7xl font-black text-dark mb-8 leading-tight dark:text-light">
               No Posts Yet
             </h1>
-            <p className="text-xl md:text-2xl text-black/70 mb-12 max-w-2xl mx-auto leading-relaxed animate-slide-up dark:text-slate-300">
+            <p className="text-xl md:text-2xl text-dark/70 mb-12 max-w-2xl mx-auto leading-relaxed animate-slide-up dark:text-light">
               Be the first to share your story!
             </p>
             <Link 
               to="/add-post" 
-              className="group relative inline-flex items-center bg-primary text-white font-bold px-12 py-5 rounded-2xl text-xl shadow-lg hover:shadow-primary/50 hover:-translate-y-1 transition-all duration-500 border-2 border-primary/20 hover:border-primary animate-slide-up"
+              className="group relative inline-flex items-center bg-primary text-light font-bold px-12 py-5 rounded-2xl text-xl shadow-lg hover:shadow-primary/50 hover:-translate-y-1 transition-all duration-500 border-2 border-primary/20 hover:border-primary animate-slide-up dark:bg-background dark:border-light/20 dark:hover:bg-background/90 dark:hover:shadow-none"
             >
               <span className="flex items-center gap-2">
                 Create First Post 
-                <span className="w-2 h-2 bg-white rounded-full group-hover:translate-x-1 transition-transform"></span>
+                <span className="w-2 h-2 bg-light rounded-full group-hover:translate-x-1 transition-transform"></span>
               </span>
             </Link>
           </div>
-        </Contaner>
+        </Container>
       </div>
     );
   }
 
   return (
-    <div className="w-full pt-32 pb-16 bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
-      <Contaner className="relative">
+    <div className="w-full pt-32 pb-16 bg-background dark:bg-background">
+      <Container className="relative">
         {/* ORIGINAL Hero Section - UNCHANGED */}
         <div className="text-center py-24 mb-20">
-          <h1 className="text-5xl md:text-7xl font-black text-black mb-8 leading-tight animate-slide-up dark:text-slate-100">
+          <h1 className="text-5xl md:text-7xl font-black text-dark mb-8 leading-tight animate-slide-up dark:text-light">
             Discover
             <span className="block text-6xl md:text-8xl text-primary font-black animate-float">Stories</span>
           </h1>
-          <p className="text-2xl md:text-3xl text-black/70 max-w-4xl mx-auto mb-16 leading-relaxed animate-slide-up dark:text-slate-300">
+          <p className="text-2xl md:text-3xl text-dark/70 max-w-4xl mx-auto mb-16 leading-relaxed animate-slide-up dark:text-light">
             Explore latest posts from creators around the world
           </p>
           <div className="flex flex-wrap gap-4 justify-center max-w-xl mx-auto animate-slide-up">
-            <div className="group flex items-center gap-3 px-8 py-4 bg-primary/5 backdrop-blur-xl rounded-2xl border-2 border-primary/10 hover:bg-primary/10 hover:border-primary/20 hover:shadow-lg transition-all duration-500 dark:bg-slate-800/70 dark:border-slate-700">
+            <div className="group flex items-center gap-3 px-8 py-4 bg-primary/5 backdrop-blur-xl rounded-2xl border-2 border-primary/10 hover:bg-primary/10 hover:border-primary/20 hover:shadow-lg transition-all duration-500 dark:bg-background dark:border-light/20">
               <div className="w-3 h-3 bg-primary rounded-full animate-gentle-pulse"></div>
               <Link 
                 to="/all-post" 
-                className="font-bold text-xl text-black dark:text-slate-100"
+                className="font-bold text-xl text-dark dark:text-light"
               >
                 Latest Posts
               </Link>
@@ -156,22 +152,22 @@ function Home() {
         {/* Feedback/Testimonial Card */}
         <section className="py-24 mb-20 text-center animate-slide-up" style={{animationDelay: '0.8s'}}>
           <div className="max-w-4xl mx-auto">
-            <div className="bg-gradient-to-br from-primary/5 via-white/80 to-primary/5 backdrop-blur-xl rounded-3xl p-12 lg:p-20 border-2 border-primary/10 shadow-2xl dark:from-slate-800/60 dark:via-slate-900/80 dark:to-slate-800/60 dark:border-slate-700">
+            <div className="bg-light backdrop-blur-xl rounded-3xl p-12 lg:p-20 border-2 border-primary/10 shadow-2xl dark:bg-background dark:border-light/20">
               <div className="w-28 h-28 bg-primary/20 rounded-3xl flex items-center justify-center mx-auto mb-12 border-2 border-primary/20 animate-gentle-pulse shadow-xl">
                 <svg className="w-14 h-14 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h2 className="text-4xl lg:text-5xl font-black text-black mb-8 leading-tight dark:text-slate-100">
+              <h2 className="text-4xl lg:text-5xl font-black text-dark mb-8 leading-tight dark:text-light">
                 Loved these stories?
               </h2>
-              <p className="text-2xl text-black/70 mb-16 leading-relaxed max-w-3xl mx-auto dark:text-slate-300">
+              <p className="text-2xl text-dark/70 mb-16 leading-relaxed max-w-3xl mx-auto dark:text-light">
                 Join our community of passionate writers and avid readers. Share your voice or discover incredible stories from creators worldwide.
               </p>
               <div className="flex flex-col lg:flex-row gap-6 justify-center items-stretch lg:items-center">
                 <Link 
                   to="/add-post"
-                  className="group bg-primary text-white font-black py-4 px-8 rounded-2xl shadow-xl hover:shadow-primary/50 hover:-translate-y-2 transition-all duration-500 text-lg border-2 border-primary/20 hover:border-primary flex items-center justify-center gap-4 flex-1 lg:flex-none w-full lg:w-auto"
+                  className="group bg-primary text-light font-black py-4 px-8 rounded-2xl shadow-xl hover:shadow-primary/50 hover:-translate-y-2 transition-all duration-500 text-lg border-2 border-primary/20 hover:border-primary flex items-center justify-center gap-4 flex-1 lg:flex-none w-full lg:w-auto dark:bg-background dark:border-light/20 dark:hover:bg-background/90 dark:hover:shadow-none"
                 >
                   Write Your Story
                   <svg className="w-6 h-6 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,7 +176,7 @@ function Home() {
                 </Link>
                 <Link 
                   to="/all-post"
-                  className="group bg-gradient-to-r from-gray-800 to-gray-900 text-white font-black py-4 px-8 rounded-2xl shadow-xl hover:shadow-gray-700 hover:-translate-y-2 transition-all duration-500 text-lg border-2 border-gray-800/30 hover:border-gray-700 flex items-center justify-center gap-4 flex-1 lg:flex-none w-full lg:w-auto"
+                  className="group bg-dark text-light font-black py-4 px-8 rounded-2xl shadow-xl hover:shadow-dark/20 hover:-translate-y-2 transition-all duration-500 text-lg border-2 border-dark/30 hover:border-dark flex items-center justify-center gap-4 flex-1 lg:flex-none w-full lg:w-auto dark:bg-background dark:border-light/20 dark:hover:bg-background/90 dark:hover:shadow-none"
                 >
                   Read More Stories
                   <svg className="w-6 h-6 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -192,7 +188,7 @@ function Home() {
           </div>
         </section>
 
-      </Contaner>
+      </Container>
     </div>
   );
 }

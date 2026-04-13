@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { Contaner } from "../components";
+import { Container } from "../components";
 import { aboutService } from "../features/about/aboutApi";
+import {
+  useDeleteResumeMutation,
+  useResumeLinksQuery,
+  useUploadResumeMutation,
+} from "../features/about/useAboutQueries";
 import { selectIsAuthenticated } from "../features/auth/authSlice";
 
 const buildFirstPageViewUrl = (url) => {
@@ -24,6 +29,9 @@ const getResumeFileName = (url) => {
 function About() {
   const navigate = useNavigate();
   const isAuthenticated = useSelector(selectIsAuthenticated);
+  const resumeLinksQuery = useResumeLinksQuery();
+  const uploadResumeMutation = useUploadResumeMutation();
+  const deleteResumeMutation = useDeleteResumeMutation();
   const [previewUrl, setPreviewUrl] = useState(aboutService.getResumePreviewUrl());
   const [downloadUrl, setDownloadUrl] = useState(aboutService.getResumeDownloadUrl());
   const [uploading, setUploading] = useState(false);
@@ -35,35 +43,18 @@ function About() {
   const resumeFileName = getResumeFileName(downloadUrl || previewUrl);
 
   useEffect(() => {
-    let mounted = true;
-
-    const resolveResumeLinks = async () => {
-      try {
-        const [resolvedPreviewUrl, resolvedDownloadUrl] = await Promise.all([
-          aboutService.resolveResumePreviewFileUrl(),
-          aboutService.resolveResumeDownloadFileUrl(),
-        ]);
-        if (!mounted) return;
-        if (resolvedPreviewUrl) setPreviewUrl(resolvedPreviewUrl);
-        if (resolvedDownloadUrl) setDownloadUrl(resolvedDownloadUrl);
-      } catch {
-        // Keep API-route fallback links.
-      }
-    };
-
-    resolveResumeLinks();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+    if (resumeLinksQuery.data?.previewUrl) {
+      setPreviewUrl(resumeLinksQuery.data.previewUrl);
+    }
+    if (resumeLinksQuery.data?.downloadUrl) {
+      setDownloadUrl(resumeLinksQuery.data.downloadUrl);
+    }
+  }, [resumeLinksQuery.data]);
 
   const refreshResumeUrls = async () => {
-    const [resolvedPreviewUrl, resolvedDownloadUrl] = await Promise.all([
-      aboutService.resolveResumePreviewFileUrl(),
-      aboutService.resolveResumeDownloadFileUrl(),
-    ]);
-    if (resolvedPreviewUrl) setPreviewUrl(resolvedPreviewUrl);
-    if (resolvedDownloadUrl) setDownloadUrl(resolvedDownloadUrl);
+    const result = await resumeLinksQuery.refetch();
+    if (result.data?.previewUrl) setPreviewUrl(result.data.previewUrl);
+    if (result.data?.downloadUrl) setDownloadUrl(result.data.downloadUrl);
   };
 
   const handleResumeUpload = async (event) => {
@@ -90,7 +81,7 @@ function About() {
     setErrorMessage("");
 
     try {
-      await aboutService.uploadResume(file, setUploadProgress);
+      await uploadResumeMutation.mutateAsync({ file, onProgress: setUploadProgress });
       await refreshResumeUrls();
       setStatusMessage("Resume uploaded/updated successfully.");
     } catch (error) {
@@ -117,7 +108,7 @@ function About() {
     setErrorMessage("");
 
     try {
-      await aboutService.deleteResume();
+      await deleteResumeMutation.mutateAsync();
       setPreviewUrl(aboutService.getResumePreviewUrl());
       setDownloadUrl(aboutService.getResumeDownloadUrl());
       setStatusMessage("Resume deleted successfully.");
@@ -137,30 +128,30 @@ function About() {
   };
 
   return (
-    <div className="min-h-screen pt-32 pb-16 bg-[linear-gradient(120deg,#fff7ed_0%,#fffbeb_30%,#f8fafc_70%,#eef2ff_100%)] dark:bg-[linear-gradient(120deg,#0b1220_0%,#0f172a_30%,#111827_70%,#0b1220_100%)]">
-      <Contaner>
+    <div className="min-h-screen pt-32 pb-16 bg-background dark:bg-background">
+      <Container>
         <div className="max-w-6xl mx-auto space-y-6">
-          <section className="rounded-[1.6rem] border border-[#d7d0c2] bg-[#f7f4ee] shadow-[0_24px_60px_-40px_rgba(30,41,59,0.45)] dark:bg-slate-900 dark:border-slate-700 overflow-hidden">
+          <section className="rounded-[1.6rem] border border-beige bg-light shadow-[0_24px_60px_-40px_rgba(30,41,59,0.25)] dark:bg-background dark:border-light/20 overflow-hidden">
             <div className="px-6 sm:px-8 pt-6 sm:pt-8">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  {/* <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.18em] text-[#c15a2a]">Recruiter Profile</p> */}
-                  <h1 className="mt-2 text-3xl sm:text-5xl font-black text-[#1f2937] dark:text-slate-100">
+                  {/* <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.18em] text-primary">Recruiter Profile</p> */}
+                  <h1 className="mt-2 text-3xl sm:text-5xl font-black text-dark dark:text-light">
                     Deepak Singh
                   </h1>
-                  <p className="mt-2 text-base sm:text-lg font-semibold text-[#d9481f] dark:text-orange-300">Fresher - MERN Stack Developer</p>
-                  <p className="mt-2 max-w-3xl text-sm sm:text-base leading-relaxed text-[#4b5563] dark:text-slate-300">
+                  <p className="mt-2 text-base sm:text-lg font-semibold text-primary dark:text-primary">Fresher - MERN Stack Developer</p>
+                  <p className="mt-2 max-w-3xl text-sm sm:text-base leading-relaxed text-dark/80 dark:text-light/80">
                     Passionate and self-driven MERN stack developer with hands-on experience building full-stack web applications through academic projects and internships. Eager to contribute, learn fast, and grow in a collaborative engineering team.
                   </p>
                 </div>
-                <span className="shrink-0 inline-flex items-center rounded-full border border-[#d9d0bf] bg-[#f3eee3] px-3 py-1 text-xs font-semibold text-[#5a5447] dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300">
+                <span className="shrink-0 inline-flex items-center rounded-full border border-beige bg-background px-3 py-1 text-xs font-semibold text-dark/80 dark:bg-background dark:border-light/20 dark:text-light/80">
                   Recruiter View
                 </span>
               </div>
             </div>
 
-            <div className="mt-5 border-t border-[#dbd3c6] bg-[#efe8db] px-6 sm:px-8 py-3 dark:bg-slate-800/70 dark:border-slate-700">
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs sm:text-sm text-[#5d584d] dark:text-slate-300">
+            <div className="mt-5 border-t border-beige bg-background px-6 sm:px-8 py-3 dark:bg-background dark:border-light/20">
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs sm:text-sm text-dark/80 dark:text-light/80">
                 <span>{`✉  deepakksingh1202@gmail.com`}</span>
                 <span>{`💼  Applied: Junior MERN Developer - Remote / Hybrid`}</span>
               </div>
@@ -168,23 +159,23 @@ function About() {
 
             <div className="px-6 sm:px-8 py-6">
               <div className="mb-3 flex items-center gap-3">
-                <span className="text-xs sm:text-sm font-semibold uppercase tracking-[0.16em] text-[#6b7280] dark:text-slate-300">Resume Preview - First Page</span>
-                <span className="h-px flex-1 bg-[#d4cdc0] dark:bg-slate-700" />
+                <span className="text-xs sm:text-sm font-semibold uppercase tracking-[0.16em] text-dark/70 dark:text-light/80">Resume Preview - First Page</span>
+                <span className="h-px flex-1 bg-beige dark:bg-light/20" />
               </div>
 
-              <div className="rounded-2xl overflow-hidden border border-[#2f3340] bg-[#1f2128] shadow-[inset_0_0_80px_rgba(255,255,255,0.03)]">
-                <div className="h-9 px-3 flex items-center justify-between bg-[#12141a] border-b border-[#333946]">
+              <div className="rounded-2xl overflow-hidden border border-beige bg-background shadow-[inset_0_0_80px_rgba(255,255,255,0.03)] dark:border-light/20">
+                <div className="h-9 px-3 flex items-center justify-between bg-light border-b border-beige dark:bg-background dark:border-light/20">
                   <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f56]" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-[#ffbd2e]" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-[#27c93f]" />
-                    <span className="ml-2 text-[11px] text-slate-300 truncate max-w-[180px] sm:max-w-[260px]">{resumeFileName}</span>
+                    <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-primary/70" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-primary/50" />
+                    <span className="ml-2 text-[11px] text-dark/80 dark:text-light/80 truncate max-w-[180px] sm:max-w-[260px]">{resumeFileName}</span>
                   </div>
-                  <span className="text-[11px] text-slate-400">Page 1 of 1</span>
+                  <span className="text-[11px] text-dark/70 dark:text-light/80">Page 1 of 1</span>
                 </div>
 
                 <div className="p-4 sm:p-6">
-                  <div className="relative mx-auto aspect-[210/297] w-full max-w-[560px] rounded-lg overflow-hidden border border-[#4b5563] bg-white">
+                  <div className="relative mx-auto aspect-210/297 w-full max-w-[560px] rounded-lg overflow-hidden border border-beige bg-white">
                     <iframe
                       title="Resume First Page Preview"
                       src={firstPagePreviewUrl}
@@ -194,18 +185,18 @@ function About() {
                 </div>
               </div>
 
-              <div className="mt-4 rounded-xl border border-amber-300/70 bg-amber-50/70 px-4 py-2 text-xs sm:text-sm text-amber-800 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-300">
+              <div className="mt-4 rounded-xl border border-primary/30 bg-light px-4 py-2 text-xs sm:text-sm text-primary dark:bg-background dark:border-primary/40 dark:text-primary">
                 Optimized first-page resume view for fast screening. Click <span className="font-semibold">Open Preview</span> to review the complete document.
               </div>
             </div>
 
-            <div className="border-t border-[#d8d0c1] bg-[#f2ecdf] px-6 sm:px-8 py-4 dark:bg-slate-800/60 dark:border-slate-700">
+            <div className="border-t border-beige bg-background px-6 sm:px-8 py-4 dark:bg-background dark:border-light/20">
               <div className="flex flex-wrap items-center gap-3">
                 <a
                   href={previewUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center rounded-xl border border-[#cfc6b6] bg-white px-4 py-2 text-sm font-semibold text-[#374151] hover:bg-[#faf8f3] dark:bg-slate-900 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+                  className="inline-flex items-center rounded-xl border border-beige bg-background px-4 py-2 text-sm font-semibold text-dark hover:bg-light dark:bg-background dark:border-light/20 dark:text-light dark:hover:bg-background"
                 >
                   Open Preview
                 </a>
@@ -213,14 +204,14 @@ function About() {
                   href={downloadUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center rounded-xl bg-[#d14d27] px-4 py-2 text-sm font-semibold text-white hover:bg-[#bf3f1a]"
+                  className="inline-flex items-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90"
                 >
                   Download PDF
                 </a>
 
                 {isAuthenticated && (
                   <>
-                    <label className="inline-flex cursor-pointer items-center rounded-xl border border-[#cfc6b6] bg-white px-4 py-2 text-sm font-semibold text-[#374151] hover:bg-[#faf8f3] dark:bg-slate-900 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">
+                    <label className="inline-flex cursor-pointer items-center rounded-xl border border-beige bg-background px-4 py-2 text-sm font-semibold text-dark hover:bg-light dark:bg-background dark:border-light/20 dark:text-light dark:hover:bg-background">
                       <input
                         type="file"
                         accept="application/pdf,.pdf"
@@ -234,7 +225,7 @@ function About() {
                       type="button"
                       onClick={handleDeleteResume}
                       disabled={uploading || deleting}
-                      className="inline-flex items-center rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-950/60"
+                      className="inline-flex items-center rounded-xl border border-warning/30 bg-light px-4 py-2 text-sm font-semibold text-warning hover:bg-background disabled:opacity-60 dark:border-warning/40 dark:bg-background dark:text-warning dark:hover:bg-background"
                     >
                       {deleting ? "Deleting..." : "Delete PDF"}
                     </button>
@@ -245,18 +236,18 @@ function About() {
           </section>
 
           {errorMessage && (
-            <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300">
+            <p className="rounded-xl border border-warning/30 bg-light px-4 py-3 text-sm font-medium text-warning dark:border-warning/40 dark:bg-background dark:text-warning">
               {errorMessage}
             </p>
           )}
           {statusMessage && (
-            <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
+            <p className="rounded-xl border border-secondary/30 bg-light px-4 py-3 text-sm font-medium text-secondary dark:border-secondary/40 dark:bg-background dark:text-secondary">
               {statusMessage}
             </p>
           )}
         </div>
 
-      </Contaner>
+      </Container>
     </div>
   );
 }

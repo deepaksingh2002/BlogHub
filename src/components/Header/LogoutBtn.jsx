@@ -1,11 +1,10 @@
 import React from "react";
-import { useDispatch } from "react-redux";
-import { logoutUser } from "../../features/auth/authThunks";
+import { useLogoutMutation } from "../../features/auth/useAuthQueries";
 
 function LogoutBtn(){
-  const dispatch = useDispatch();
+  const logoutMutation = useLogoutMutation();
   const handleLogout = () => {
-    dispatch(logoutUser());
+    logoutMutation.mutate();
   };
 
   return (

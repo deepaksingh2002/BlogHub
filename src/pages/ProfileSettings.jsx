@@ -1,55 +1,58 @@
 import React, { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import {
-  changeUserPassword,
-  getUserProfile,
-  updateUserProfile,
-} from "../features/auth/authThunks";
-import {
-  clearAuthState,
-  selectAuthError,
-  selectAuthLoading,
-  selectAuthMessage,
   selectAuthUser,
 } from "../features/auth/authSlice";
-import { Contaner } from "../components";
+import { Container } from "../components";
 import ProfileDetailsForm from "../components/Profile/ProfileDetailsForm";
 import ChangePasswordForm from "../components/Profile/ChangePasswordForm";
+import {
+  useChangePasswordMutation,
+  useUpdateUserProfileMutation,
+  useUserProfileQuery,
+} from "../features/auth/useAuthQueries";
 
 function ProfileSettings() {
-  const dispatch = useDispatch();
   const user = useSelector(selectAuthUser);
-  const loading = useSelector(selectAuthLoading);
-  const error = useSelector(selectAuthError);
-  const message = useSelector(selectAuthMessage);
+  const userProfileQuery = useUserProfileQuery(true);
+  const updateProfileMutation = useUpdateUserProfileMutation();
+  const changePasswordMutation = useChangePasswordMutation();
+  const [error, setError] = React.useState("");
+  const [message, setMessage] = React.useState("");
+  const loading =
+    userProfileQuery.isFetching ||
+    updateProfileMutation.isPending ||
+    changePasswordMutation.isPending;
 
   useEffect(() => {
-    dispatch(getUserProfile());
-    return () => {
-      dispatch(clearAuthState());
-    };
-  }, [dispatch]);
+    setError("");
+    setMessage("");
+  }, []);
 
   const handleUpdateProfile = async (data) => {
     try {
-      await dispatch(updateUserProfile(data)).unwrap();
-    } catch {
-      // error handled by slice/UI
+      setError("");
+      const response = await updateProfileMutation.mutateAsync(data);
+      setMessage(response?.message || response?.data?.message || "Profile updated successfully");
+    } catch (err) {
+      setError(err?.response?.data?.message || err?.message || "Failed to update profile");
     }
   };
 
   const handleChangePassword = async (data) => {
     try {
-      await dispatch(changeUserPassword(data)).unwrap();
-    } catch {
-      // error handled by slice/UI
+      setError("");
+      const response = await changePasswordMutation.mutateAsync(data);
+      setMessage(response?.message || response?.data?.message || "Password changed successfully");
+    } catch (err) {
+      setError(err?.response?.data?.message || err?.message || "Failed to change password");
     }
   };
 
   return (
-    <div className="min-h-screen pt-32 pb-16 bg-gradient-to-b from-gray-50 to-white dark:from-slate-900 dark:to-slate-950">
-      <Contaner>
+    <div className="min-h-screen pt-32 pb-16 bg-linear-to-b from-gray-50 to-white dark:from-slate-900 dark:to-slate-950">
+      <Container>
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="flex items-center justify-between gap-3">
             <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-slate-100">Profile Settings</h1>
@@ -75,7 +78,7 @@ function ProfileSettings() {
           <ProfileDetailsForm user={user} loading={loading} onSubmit={handleUpdateProfile} />
           <ChangePasswordForm loading={loading} onSubmit={handleChangePassword} />
         </div>
-      </Contaner>
+      </Container>
     </div>
   );
 }

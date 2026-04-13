@@ -1,25 +1,26 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Logo, Contaner } from "../index";
+import { Logo, Container } from "../index";
 import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { selectIsAuthenticated, selectAuthUser } from '../../features/auth/authSlice';
-import { searchPosts } from '../../features/post/postThunks';
 import { HiOutlineBars3, HiMagnifyingGlass, HiXMark } from 'react-icons/hi2';
+import { hasRole } from '../../utils/roleHelpers';
 
 // Responsive app header:
 // - Desktop: logo, search, nav items, and profile actions
 // - Mobile: compact top bar with inline search and slide-down drawer menu
 function Header({ isDarkMode, onToggleTheme }) {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
   const authStatus = useSelector(selectIsAuthenticated);
   const user = useSelector(selectAuthUser);
   const avatar = user?.avatar;
+  const isAdminUser = hasRole(user, ["admin", "superadmin"]);
+  const profileRoute = isAdminUser ? "/admin/profile" : "/profile";
 
   // Local UI state for mobile menu visibility and async search feedback.
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searching, setSearching] = useState(false);
+  const searching = false;
   const menuRef = useRef(null);
 
   // Navigation options are conditionally shown based on auth state.
@@ -28,7 +29,7 @@ function Header({ isDarkMode, onToggleTheme }) {
     { name: "Login", slug: "/login", active: !authStatus },
     { name: "Signup", slug: "/signup", active: !authStatus },
     { name: "All Posts", slug: "/all-post", active: true },
-    { name: "Add Post", slug: "/add-post", active: authStatus },
+    { name: "Authors", slug: "/authors", active: authStatus },
     { name: "About Me", slug: "/about", active: true },
   ];
   const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
@@ -38,19 +39,9 @@ function Header({ isDarkMode, onToggleTheme }) {
     const query = searchQuery.trim();
     if (!query) return;
 
-    setSearching(true);
-    try {
-      // Persist searched posts in Redux, then open URL-based results view.
-      await dispatch(searchPosts(query)).unwrap();
-      navigate(`/search?q=${encodeURIComponent(query)}`);
-    } catch (error) {
-      console.error("Search failed:", error);
-      alert("Search failed. Please try again.");
-    } finally {
-      setSearching(false);
-      setSearchQuery('');
-    }
-  }, [searchQuery, dispatch, navigate]);
+    navigate(`/search?q=${encodeURIComponent(query)}`);
+    setSearchQuery('');
+  }, [searchQuery, navigate]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
@@ -105,11 +96,11 @@ function Header({ isDarkMode, onToggleTheme }) {
   }, []);
 
   return (
-    <header className="py-3 mb-4 shadow-lg bg-primary text-white w-full z-50 fixed top-0 left-0 right-0">
-      <Contaner>
+    <header className="py-3 mb-4 shadow-lg bg-primary text-light w-full z-100 fixed top-0 left-0 right-0 border-b border-light/20">
+      <Container>
         {/* Desktop layout (md and above) */}
         <div className="hidden md:flex items-center justify-between gap-4">
-          <Link to="/" className="flex-shrink-0 h-11 w-11 border-2 border-white rounded-xl flex items-center justify-center">
+          <Link to="/" className="shrink-0 h-11 w-11 border-2 border-light rounded-xl flex items-center justify-center bg-light/10">
             <Logo width="40px" />
           </Link>
 
@@ -123,32 +114,32 @@ function Header({ isDarkMode, onToggleTheme }) {
                 onKeyDown={handleKeyDown}
                 placeholder="Search posts..."
                 disabled={searching}
-                className={`flex-1 pl-4 pr-12 py-2.5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 focus:border-white focus:outline-none focus:bg-white/20 transition-all text-white placeholder-gray-300 ${
+                className={`flex-1 pl-4 pr-12 py-2.5 rounded-xl bg-light/10 backdrop-blur-sm border border-light/25 focus:border-light focus:outline-none focus:bg-light/20 transition-all text-light placeholder-light/70 ${
                   searching ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               />
               <button
                 onClick={handleSearch}
                 disabled={searching || !searchQuery.trim()}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-lg hover:bg-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-lg hover:bg-light/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 type="button"
               >
                 {searching ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <div className="w-5 h-5 border-2 border-light border-t-transparent rounded-full animate-spin"></div>
                 ) : (
-                  <HiMagnifyingGlass className="w-5 h-5" />
+                  <HiMagnifyingGlass className="w-5 h-5 text-light" />
                 )}
               </button>
             </div>
           </div>
 
-          <ul className="flex items-center gap-2 flex-shrink-0">
+          <ul className="flex items-center gap-2 shrink-0">
             {navItems.map((item) =>
               item.active ? (
                 <li key={item.name}>
                   <button
                     onClick={() => navigate(item.slug)}
-                    className="h-11 border-2 border-white text-black font-bold px-4 rounded-xl hover:bg-white hover:scale-[1.02] transition-all text-sm whitespace-nowrap"
+                    className="h-11 border-2 border-light bg-light text-dark font-bold px-4 rounded-xl hover:bg-beige hover:scale-[1.02] transition-all text-sm whitespace-nowrap"
                   >
                     {item.name}
                   </button>
@@ -158,7 +149,7 @@ function Header({ isDarkMode, onToggleTheme }) {
             <li>
               <button
                 onClick={onToggleTheme}
-                className="h-11 w-11 border-2 border-white text-black rounded-xl hover:bg-white hover:scale-[1.02] transition-all flex items-center justify-center"
+                className="h-11 w-11 border-2 border-light bg-light text-dark rounded-xl hover:bg-beige hover:scale-[1.02] transition-all flex items-center justify-center"
                 type="button"
                 aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
                 title={isDarkMode ? "Light mode" : "Dark mode"}
@@ -169,8 +160,8 @@ function Header({ isDarkMode, onToggleTheme }) {
             {authStatus && (
               <li>
                 <button
-                  onClick={() => navigate("/profile")}
-                  className="h-11 w-11 rounded-full overflow-hidden border-2 border-white hover:bg-white hover:scale-[1.02] transition-all"
+                  onClick={() => navigate(profileRoute)}
+                  className="h-11 w-11 rounded-full overflow-hidden border-2 border-light hover:bg-light/20 hover:scale-[1.02] transition-all"
                   type="button"
                   aria-label="Open profile"
                   title="Profile"
@@ -190,7 +181,7 @@ function Header({ isDarkMode, onToggleTheme }) {
         {/* Mobile layout (below md) */}
         <div className="md:hidden px-2 w-full">
           <div className="flex items-center gap-2 w-full min-w-0">
-            <Link to="/" className="h-11 w-11 border-2 border-white rounded-xl hover:bg-white hover:scale-[1.02] transition-all flex items-center justify-center flex-shrink-0">
+            <Link to="/" className="h-11 w-11 border-2 border-light rounded-xl bg-light/10 hover:bg-light/20 hover:scale-[1.02] transition-all flex items-center justify-center shrink-0">
               <Logo width="28px" />
             </Link>
 
@@ -204,20 +195,20 @@ function Header({ isDarkMode, onToggleTheme }) {
                 onKeyDown={handleKeyDown}
                 placeholder="Search..."
                   disabled={searching}
-                  className={`h-11 w-full pl-3 pr-9 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 focus:border-white focus:outline-none focus:bg-white/20 transition-all text-white placeholder-gray-300 text-sm ${
+                  className={`h-11 w-full pl-3 pr-9 rounded-lg bg-light/10 backdrop-blur-sm border border-light/25 focus:border-light focus:outline-none focus:bg-light/20 transition-all text-light placeholder-gray-100 text-sm ${
                     searching ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 />
                 <button
                   onClick={handleSearch}
                   disabled={searching || !searchQuery.trim()}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded hover:bg-white/20 transition-all disabled:opacity-50"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded hover:bg-light/20 transition-all disabled:opacity-50"
                   type="button"
                 >
                   {searching ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-4 h-4 border-2 border-light border-t-transparent rounded-full animate-spin"></div>
                   ) : (
-                    <HiMagnifyingGlass className="w-4 h-4" />
+                    <HiMagnifyingGlass className="w-4 h-4 text-light" />
                   )}
                 </button>
               </div>
@@ -225,14 +216,14 @@ function Header({ isDarkMode, onToggleTheme }) {
 
             <button
               onClick={toggleMenu}
-              className="h-11 w-11 rounded-lg hover:bg-white/20 transition-all z-50 border border-white/20 flex items-center justify-center flex-shrink-0"
+                  className="h-11 w-11 rounded-lg hover:bg-light/20 transition-all z-50 border border-light/25 flex items-center justify-center shrink-0 text-light"
               aria-label="Toggle menu"
             >
               {isMenuOpen ? <HiXMark className="w-6 h-6" /> : <HiOutlineBars3 className="w-6 h-6" />}
             </button>
           </div>
         </div>
-      </Contaner>
+      </Container>
 
       {/* Mobile drawer anchored below fixed header */}
       {isMenuOpen && (
@@ -240,8 +231,8 @@ function Header({ isDarkMode, onToggleTheme }) {
           ref={menuRef}
           className="md:hidden fixed left-0 right-0 top-[72px] px-2 pt-2 z-40"
         >
-          <div className="bg-primary/95 backdrop-blur-md border border-white/20 rounded-2xl py-5 px-4 shadow-2xl space-y-3 w-full max-w-full max-h-[70vh] overflow-y-auto overflow-x-hidden">
-            <h3 className="text-xl font-bold text-white mb-4 border-b border-white/20 pb-3">Menu</h3>
+          <div className="bg-primary/95 backdrop-blur-md border border-light/25 rounded-2xl py-5 px-4 shadow-2xl space-y-3 w-full max-w-full max-h-[70vh] overflow-y-auto overflow-x-hidden">
+            <h3 className="text-xl font-bold text-light mb-4 border-b border-light/25 pb-3">Menu</h3>
 
             {navItems.map((item) =>
               item.active && (
@@ -251,7 +242,7 @@ function Header({ isDarkMode, onToggleTheme }) {
                     navigate(item.slug);
                     closeMenu();
                   }}
-                  className="w-full text-left p-4 rounded-xl hover:bg-white/20 transition-all border border-white/30 text-white font-semibold text-base shadow-sm"
+                  className="w-full text-left p-4 rounded-xl hover:bg-light/20 transition-all border border-light/25 text-light font-semibold text-base shadow-sm"
                 >
                   {item.name}
                 </button>
@@ -260,7 +251,7 @@ function Header({ isDarkMode, onToggleTheme }) {
 
             <button
               onClick={onToggleTheme}
-              className="w-full p-4 rounded-xl hover:bg-white/20 transition-all border border-white/30 text-white font-semibold text-base shadow-sm flex items-center gap-3"
+              className="w-full p-4 rounded-xl hover:bg-light/20 transition-all border border-light/25 text-light font-semibold text-base shadow-sm flex items-center gap-3"
               type="button"
               aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
             >
@@ -271,16 +262,16 @@ function Header({ isDarkMode, onToggleTheme }) {
             {authStatus && (
               <button
                 onClick={() => {
-                  navigate("/profile");
+                  navigate(profileRoute);
                   closeMenu();
                 }}
-                className="w-full p-4 rounded-xl hover:bg-white/20 transition-all border border-white/30 text-white font-semibold text-base shadow-sm flex items-center gap-3"
+                className="w-full p-4 rounded-xl hover:bg-light/20 transition-all border border-light/30 text-light font-semibold text-base shadow-sm flex items-center gap-3"
                 type="button"
                 aria-label="Open profile"
               >
                 <img
                   src={avatar || defaultAvatar}
-                  className="w-8 h-8 rounded-full object-cover border border-white/40"
+                  className="w-8 h-8 rounded-full object-cover border border-light/40"
                   alt="User avatar"
                 />
                 <span>Profile</span>
