@@ -1,12 +1,13 @@
 import React, { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { HiOutlineTrash } from "react-icons/hi2";
+import { HiCheckBadge, HiOutlineTrash } from "react-icons/hi2";
 import { Container } from "../components";
 import AdminTable from "../components/Admin/AdminTable";
 import { selectAuthUser } from "../features/auth/authSlice";
 import { useAdminUsersQuery, useDeleteUserMutation } from "../features/admin/useAdminQueries";
 import { hasRole } from "../utils/roleHelpers";
+import { isVerifiedAuthor } from "../utils/postHelpers";
 
 const getUserId = (user) => user?._id || user?.id || "";
 
@@ -110,24 +111,31 @@ function AdminUsers() {
     {
       key: "user",
       header: "User",
-      render: (user) => (
-        <div className="flex items-center gap-3 min-w-0">
-          <img
-            src={getAvatarUrl(user)}
-            alt={getDisplayName(user)}
-            className="h-11 w-11 rounded-2xl object-cover border border-beige dark:border-light/20 shrink-0"
-          />
-          <div className="min-w-0">
-            <Link
-              to={`/admin/users/${user?._id}`}
-              className="block font-bold text-dark hover:text-primary dark:text-light dark:hover:text-primary truncate"
-            >
-              {getDisplayName(user)}
-            </Link>
-            <p className="text-xs text-dark/70 dark:text-light/80 truncate">@{user?.username || "unknown"} · {user?.email || "No email"}</p>
+      render: (user) => {
+        const verified = isVerifiedAuthor(user);
+
+        return (
+          <div className="flex items-center gap-3 min-w-0">
+            <img
+              src={getAvatarUrl(user)}
+              alt={getDisplayName(user)}
+              className="h-11 w-11 rounded-2xl object-cover border border-beige dark:border-light/20 shrink-0"
+            />
+            <div className="min-w-0">
+              <Link
+                to={`/admin/users/${user?._id}`}
+                className="inline-flex items-center gap-1.5 font-bold text-dark hover:text-primary dark:text-light dark:hover:text-primary max-w-full"
+              >
+                <span className="truncate">{getDisplayName(user)}</span>
+                {verified && (
+                  <HiCheckBadge className="h-4 w-4 shrink-0 text-primary" title="Verified author" />
+                )}
+              </Link>
+              <p className="text-xs text-dark/70 dark:text-light/80 truncate">@{user?.username || "unknown"} · {user?.email || "No email"}</p>
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       key: "role",

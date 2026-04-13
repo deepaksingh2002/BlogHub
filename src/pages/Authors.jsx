@@ -1,8 +1,10 @@
 import React from "react";
+import { HiCheckBadge } from "react-icons/hi2";
 import { useSelector } from "react-redux";
 import { Container } from "../components";
 import { selectAuthUser } from "../features/auth/authSlice";
 import { useAuthorsListQuery, useToggleFollowMutation } from "../features/subscription/useSubscriptionQueries";
+import { isVerifiedAuthor } from "../utils/postHelpers";
 
 const getDisplayName = (author) =>
   author?.fullName || author?.username || "Unknown Author";
@@ -63,6 +65,7 @@ function Authors() {
                 const authorId = author?._id || author?.id;
                 const isSelf = currentUserId && String(currentUserId) === String(authorId);
                 const isFollowing = Boolean(author?.isFollowing);
+                const isAuthorVerified = isVerifiedAuthor(author);
 
                 return (
                   <article
@@ -77,8 +80,11 @@ function Authors() {
                       />
 
                       <div className="min-w-0 flex-1">
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100 truncate">
-                          {getDisplayName(author)}
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100 truncate inline-flex items-center gap-1.5">
+                          <span className="truncate">{getDisplayName(author)}</span>
+                          {isAuthorVerified && (
+                            <HiCheckBadge className="h-4 w-4 shrink-0 text-primary" title="Verified author" />
+                          )}
                         </h2>
                         <p className="text-sm text-gray-500 dark:text-slate-400 truncate">
                           @{author?.username || "unknown"}
