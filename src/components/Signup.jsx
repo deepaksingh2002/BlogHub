@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { registerUser, loginUser } from "../features/auth/authThunks";
 import { Button, Input, Logo } from "./index";
 import PasswordInput from "./PasswordInput";
-import { useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
+import { getDashboardPathForUser } from "../utils/roleHelpers";
+import { useBootstrapCurrentUserQuery, useSignupMutation } from "../features/auth/useAuthQueries";
 
 function Signup() {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const signupMutation = useSignupMutation();
+  const bootstrapQuery = useBootstrapCurrentUserQuery(false);
 
   const {
     register,
@@ -40,20 +41,27 @@ function Signup() {
         password: data.password.trim(),
       };
 
-      //Register user
-      await dispatch(registerUser(signupData)).unwrap();
+      // Register user
+      const signupResponse = await signupMutation.mutateAsync(signupData);
 
+      // Hydrate user with full profile/role info
+      const currentUserResponse = await bootstrapQuery.refetch();
+      const currentPayload = currentUserResponse?.data;
+      
+      // Extract user from the getCurrentUser response - this now has full role info
+      const user =
+        currentPayload?.user ||
+        currentPayload?.currentUser ||
+        currentPayload?.loggedInUser ||
+        currentPayload?.data?.user ||
+        currentPayload?.data?.currentUser ||
+        currentPayload?.data?.loggedInUser ||
+        currentPayload?.data ||
+        signupResponse?.user ||
+        signupResponse?.data?.user ||
+        null;
 
-      // Auto-login
-      await dispatch(
-        loginUser({
-          email: data.email,
-          password: data.password,
-        })
-      ).unwrap();
-
-      // Redirect to home
-      navigate("/");
+      navigate(getDashboardPathForUser(user));
     } catch (error) {
       setServerError(
         typeof error === "string"
@@ -66,18 +74,18 @@ function Signup() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 px-4 py-10">
-      <div className="mx-auto w-full max-w-lg bg-gray-100 rounded-xl p-10 m-10 border border-black/10 shadow-lg transition-colors dark:bg-slate-800 dark:border-slate-700">
+    <div className="w-full min-h-screen bg-background dark:bg-background px-4 py-10">
+      <div className="mx-auto w-full max-w-lg bg-light dark:bg-light rounded-xl p-10 m-10 border border-secondary/20 shadow-lg transition-colors">
         <div className="mb-2 flex justify-center">
           <span className="inline-block w-full max-w-[100px]">
             <Logo width="100%" />
           </span>
         </div>
 
-        <h2 className="text-center text-2xl font-bold leading-tight text-gray-900 dark:text-slate-100">
+        <h2 className="text-center text-2xl font-bold leading-tight text-dark dark:text-dark">
           Create your account
         </h2>
-        <p className="mt-2 text-center text-base text-black/60 dark:text-slate-300">
+        <p className="mt-2 text-center text-base text-dark/70 dark:text-dark/70">
           Already have an account?&nbsp;
           <Link
             to="/login"
@@ -88,8 +96,8 @@ function Signup() {
         </p>
 
         {serverError && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg dark:bg-red-950/30 dark:border-red-800">
-            <p className="text-red-600 font-medium text-sm">{serverError}</p>
+          <div className="mt-4 p-3 bg-warning/10 border border-warning/30 rounded-lg">
+            <p className="text-warning font-medium text-sm">{serverError}</p>
           </div>
         )}
 
@@ -105,7 +113,7 @@ function Signup() {
               })}
             />
             {errors.name && (
-              <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
+              <p className="text-warning text-xs mt-1">{errors.name.message}</p>
             )}
 
             <Input
@@ -121,7 +129,7 @@ function Signup() {
               })}
             />
             {errors.email && (
-              <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+              <p className="text-warning text-xs mt-1">{errors.email.message}</p>
             )}
 
             <PasswordInput
@@ -134,7 +142,7 @@ function Signup() {
               })}
             />
             {errors.password && (
-              <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
+              <p className="text-warning text-xs mt-1">{errors.password.message}</p>
             )}
 
             <PasswordInput
@@ -147,7 +155,7 @@ function Signup() {
               })}
             />
             {errors.confirmPassword && (
-              <p className="text-red-500 text-xs mt-1">
+              <p className="text-warning text-xs mt-1">
                 {errors.confirmPassword.message}
               </p>
             )}

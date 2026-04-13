@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { loginUser } from "../features/auth/authThunks";
 import { Button, Input, Logo } from "./index";
 import PasswordInput from "./PasswordInput";
-import { useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
+import { getDashboardPathForUser } from "../utils/roleHelpers";
+import { useBootstrapCurrentUserQuery, useLoginMutation } from "../features/auth/useAuthQueries";
 
 function Login() {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const loginMutation = useLoginMutation();
+  const bootstrapQuery = useBootstrapCurrentUserQuery(false);
 
   const {
     register,
@@ -30,8 +31,39 @@ function Login() {
     setLoading(true);
 
     try {
-      await dispatch(loginUser(data)).unwrap();
-      navigate("/");
+      const loginResponse = await loginMutation.mutateAsync(data);
+
+      // Start with the login payload, then try to hydrate from /currentUser.
+      const loginUserPayload =
+        loginResponse?.user ||
+        loginResponse?.currentUser ||
+        loginResponse?.loggedInUser ||
+        loginResponse?.data?.user ||
+        loginResponse?.data?.currentUser ||
+        loginResponse?.data?.loggedInUser ||
+        loginResponse?.data ||
+        null;
+
+      let effectiveUser = loginUserPayload;
+
+      try {
+        const currentUserResponse = await bootstrapQuery.refetch();
+        const currentPayload = currentUserResponse?.data;
+        effectiveUser =
+          currentPayload?.user ||
+          currentPayload?.currentUser ||
+          currentPayload?.loggedInUser ||
+          currentPayload?.data?.user ||
+          currentPayload?.data?.currentUser ||
+          currentPayload?.data?.loggedInUser ||
+          currentPayload?.data ||
+          effectiveUser;
+      } catch {
+        // If currentUser fails due missing refresh cookie/cross-site cookie policy,
+        // keep the successful login flow using the login response payload.
+      }
+
+      navigate(getDashboardPathForUser(effectiveUser));
     } catch (error) {
       setServerError(
         typeof error === "string"
@@ -44,17 +76,17 @@ function Login() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 px-4 py-10">
-      <div className="mx-auto w-full max-w-lg bg-gray-100 rounded-xl p-10 m-10 border border-black/10 shadow-lg dark:bg-slate-800 dark:border-slate-700">
+    <div className="w-full min-h-screen bg-background dark:bg-background px-4 py-10">
+      <div className="mx-auto w-full max-w-lg bg-light dark:bg-light rounded-xl p-10 m-10 border border-secondary/20 shadow-lg">
         <div className="mb-2 flex justify-center">
           <span className="inline-block w-full max-w-[100px]">
             <Logo width="100%" />
           </span>
         </div>
-        <h2 className="text-center text-2xl font-bold leading-tight text-gray-900 dark:text-slate-100">
+        <h2 className="text-center text-2xl font-bold leading-tight text-dark dark:text-dark">
           Sign in to your account
         </h2>
-        <p className="mt-2 text-center text-base text-black/60 dark:text-slate-300">
+        <p className="mt-2 text-center text-base text-dark/70 dark:text-dark/70">
           Create new account?&nbsp;
           <Link
             to="/signup"
@@ -64,8 +96,8 @@ function Login() {
           </Link>
         </p>
         {serverError && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg dark:bg-red-950/30 dark:border-red-800">
-            <p className="text-red-600 font-medium text-sm">{serverError}</p>
+          <div className="mt-4 p-3 bg-warning/10 border border-warning/30 rounded-lg">
+            <p className="text-warning font-medium text-sm">{serverError}</p>
           </div>
         )}
         <form onSubmit={handleSubmit(handleLogin)} className="mt-6">
@@ -86,7 +118,7 @@ function Login() {
                 })}
               />
               {errors.email && (
-                <p className="text-red-500 text-xs mt-1 font-medium">
+                <p className="text-warning text-xs mt-1 font-medium">
                   {errors.email.message}
                 </p>
               )}
@@ -105,7 +137,7 @@ function Login() {
                 })}
               />
               {errors.password && (
-                <p className="text-red-500 text-xs mt-1 font-medium">
+                <p className="text-warning text-xs mt-1 font-medium">
                   {errors.password.message}
                 </p>
               )}

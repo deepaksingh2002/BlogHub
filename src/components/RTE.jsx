@@ -6,7 +6,7 @@ export default function RTE({ name = "content", control, label }) {
   return (
     <div className="w-full">
       {label && (
-        <label className="block mb-2 font-medium text-gray-700 dark:text-slate-200">
+        <label className="block mb-2 font-medium text-dark dark:text-dark">
           {label}
         </label>
       )}
