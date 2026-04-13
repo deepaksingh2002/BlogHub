@@ -117,9 +117,9 @@ export const useLogoutMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async (payload = {}) => {
       try {
-        await AuthService.logout();
+        await AuthService.logout(payload);
       } catch {
         // Clear local session even when logout endpoint fails.
       }

@@ -58,7 +58,7 @@ api.interceptors.response.use(
 export const AuthService = {
   register: (data) => api.post("/register", data),
   login: (data) => api.post("/login", data),
-  logout: () => api.post("/logout", buildRefreshPayload()),
+  logout: (data = {}) => api.post("/logout", buildRefreshPayload(data)),
   applyForAuthor: (data) => api.post("/apply-author", data),
   forgotPassword: async (data) => {
     const endpoints = ["/forgot-password", "/forgotPassword"];

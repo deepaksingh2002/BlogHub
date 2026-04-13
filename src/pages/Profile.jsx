@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { HiCheckBadge } from "react-icons/hi2";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import {
   selectAuthUser,
 } from "../features/auth/authSlice";
 import { Container } from "../components";
+import { clearAuthSession } from "../features/auth/authSlice";
+import { clearStoredAuthTokens, getStoredRefreshToken } from "../features/auth/authSession";
 import { getDashboardPathForUser, hasRole } from "../utils/roleHelpers";
 import { isVerifiedAuthor } from "../utils/postHelpers";
 import {
@@ -56,6 +58,7 @@ const getPostOwnerId = (post) =>
 
 function Profile() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const userProfileQuery = useUserProfileQuery(true);
   const postsQuery = usePostsQuery();
   const updateAvatarMutation = useUpdateUserAvatarMutation();
@@ -179,13 +182,12 @@ function Profile() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logoutMutation.mutateAsync();
-      navigate("/login");
-    } catch {
-      alert("Logout failed. Please try again.");
-    }
+  const handleLogout = () => {
+    const refreshToken = getStoredRefreshToken();
+    dispatch(clearAuthSession());
+    clearStoredAuthTokens();
+    navigate("/", { replace: true });
+    logoutMutation.mutate({ refreshToken });
   };
 
   const handleApplyForAuthor = async () => {
