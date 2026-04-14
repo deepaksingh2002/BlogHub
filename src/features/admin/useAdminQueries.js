@@ -25,7 +25,7 @@ const pickStats = (payload) => {
   );
 };
 
-const parseAdminOverview = ({ dashboard, profile, applications, logs }) => ({
+const parseAdminOverview = ({ dashboard, profile, applications, logs, reports }) => ({
   stats: pickStats(dashboard),
   profile: profile?.data || profile?.profile || profile || {},
   applications: pickArray(applications, [
@@ -35,6 +35,7 @@ const parseAdminOverview = ({ dashboard, profile, applications, logs }) => ({
     "users",
   ]),
   logs: pickArray(logs, ["logs", "moderationLogs", "items"]),
+  reports: pickArray(reports, ["reports", "openReports", "items"]),
 });
 
 const adminKeys = {
@@ -49,13 +50,14 @@ export const useAdminOverviewQuery = (enabled = true) => {
     queryKey: adminKeys.overview,
     enabled,
     queryFn: async () => {
-      const [dashboard, profile, applications, logs] = await Promise.all([
+      const [dashboard, profile, applications, logs, reports] = await Promise.all([
         adminService.getDashboard(),
         adminService.getProfile(),
         adminService.getAuthorApplications(),
         adminService.getModerationLogs(),
+        adminService.getReports(),
       ]);
-      return parseAdminOverview({ dashboard, profile, applications, logs });
+      return parseAdminOverview({ dashboard, profile, applications, logs, reports });
     },
   });
 };
