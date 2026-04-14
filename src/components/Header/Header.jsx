@@ -25,7 +25,6 @@ function Header({ isDarkMode, onToggleTheme }) {
 
   // Navigation options are conditionally shown based on auth state.
   const navItems = [
-    { name: "Home", slug: "/", active: true },
     { name: "Login", slug: "/login", active: !authStatus },
     { name: "Signup", slug: "/signup", active: !authStatus },
     { name: "All Posts", slug: "/all-post", active: true },
