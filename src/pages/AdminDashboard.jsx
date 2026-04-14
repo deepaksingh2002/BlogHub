@@ -37,6 +37,7 @@ function AdminDashboard() {
   const profile = adminOverviewQuery.data?.profile || {};
   const applications = adminOverviewQuery.data?.applications || [];
   const logs = adminOverviewQuery.data?.logs || [];
+  const reports = adminOverviewQuery.data?.reports || [];
   const actionError =
     approveMutation.error?.message ||
     rejectMutation.error?.message ||
@@ -106,6 +107,19 @@ function AdminDashboard() {
       setCommentIdToDelete("");
     } catch (err) {
       if (err?.statusCode === 401) navigate("/login");
+    }
+  };
+
+  const handleUseReportedId = (reportItem) => {
+    if (!reportItem) return;
+
+    if (reportItem.targetType === "post") {
+      setPostIdToDelete(String(reportItem.targetId || ""));
+      return;
+    }
+
+    if (reportItem.targetType === "comment") {
+      setCommentIdToDelete(String(reportItem.targetId || ""));
     }
   };
 
@@ -247,6 +261,41 @@ function AdminDashboard() {
               </Link>
 
               <div className="mt-5 space-y-4">
+                <div className="rounded-2xl border border-beige bg-background p-3.5 dark:border-light/20 dark:bg-background">
+                  <h3 className="text-sm font-bold text-dark dark:text-light">Reported Items</h3>
+                  {reports.length === 0 ? (
+                    <p className="mt-2 text-xs text-dark/70 dark:text-light/80">No open reports right now.</p>
+                  ) : (
+                    <div className="mt-3 space-y-2 max-h-52 overflow-y-auto pr-1">
+                      {reports.map((report) => (
+                        <div
+                          key={report?._id || `${report?.targetType}-${report?.targetId}`}
+                          className="rounded-xl border border-beige/70 bg-light p-2.5 dark:border-light/20 dark:bg-background"
+                        >
+                          <p className="text-xs font-semibold text-dark dark:text-light">
+                            {String(report?.targetType || "item").toUpperCase()} ID: {report?.targetId}
+                          </p>
+                          <p className="mt-1 text-[11px] text-dark/70 dark:text-light/80 line-clamp-2">
+                            Reporter: {report?.reporter?.fullName || report?.reporter?.username || report?.reporter?.email || "Unknown"}
+                          </p>
+                          {report?.reason ? (
+                            <p className="mt-1 text-[11px] text-dark/65 dark:text-light/75 line-clamp-2">
+                              Reason: {report.reason}
+                            </p>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => handleUseReportedId(report)}
+                            className="mt-2 h-7 px-2.5 rounded-lg bg-primary text-white text-[11px] font-semibold hover:opacity-90"
+                          >
+                            Use This ID
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <div>
                   <label className="block text-xs uppercase tracking-[0.12em] text-dark/70 dark:text-light/80">Delete Post By ID</label>
                   <div className="mt-2 flex gap-2">
