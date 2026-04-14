@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { HiOutlineShieldCheck } from "react-icons/hi2";
@@ -7,11 +7,12 @@ import AdminUsersPanel from "../components/Admin/AdminUsersPanel";
 import { clearAuthSession, selectAuthUser } from "../features/auth/authSlice";
 import { clearStoredAuthTokens, getStoredRefreshToken } from "../features/auth/authSession";
 import { useLogoutMutation } from "../features/auth/useAuthQueries";
-import { useAdminOverviewQuery, useAdminUsersQuery } from "../features/admin/useAdminQueries";
+import {
+  useAdminOverviewQuery,
+  useAdminUsersQuery,
+  useUpdateAdminProfileMutation,
+} from "../features/admin/useAdminQueries";
 import { hasRole } from "../utils/roleHelpers";
-
-const getAvatarUrl = (user) =>
-  user?.avatar?.url || user?.avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
 function AdminProfile() {
   const navigate = useNavigate();
@@ -19,6 +20,12 @@ function AdminProfile() {
   const currentUser = useSelector(selectAuthUser);
   const isAdmin = useMemo(() => hasRole(currentUser, ["admin", "superadmin"]), [currentUser]);
   const logoutMutation = useLogoutMutation();
+  const updateAdminProfileMutation = useUpdateAdminProfileMutation();
+  const [profileMessage, setProfileMessage] = useState("");
+  const [profileError, setProfileError] = useState("");
+  const [profileForm, setProfileForm] = useState({ fullName: "", bio: "" });
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState("");
 
   const overviewQuery = useAdminOverviewQuery(isAdmin);
   const usersQuery = useAdminUsersQuery(
@@ -44,6 +51,62 @@ function AdminProfile() {
 
   const profile = overviewQuery.data?.profile || {};
   const stats = overviewQuery.data?.stats || {};
+  const profileAvatar = profile?.avatar?.url || profile?.avatar || currentUser?.avatar?.url || currentUser?.avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+
+  useEffect(() => {
+    setProfileForm({
+      fullName: profile?.fullName || currentUser?.fullName || "",
+      bio: profile?.bio || currentUser?.bio || "",
+    });
+  }, [currentUser?.bio, currentUser?.fullName, profile?.bio, profile?.fullName]);
+
+  useEffect(() => {
+    if (avatarPreview?.startsWith("blob:")) {
+      return () => URL.revokeObjectURL(avatarPreview);
+    }
+    return undefined;
+  }, [avatarPreview]);
+
+  const handleAvatarChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setProfileError("Please select a valid image file.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setProfileError("Image size should be less than 5MB.");
+      return;
+    }
+
+    setProfileError("");
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
+
+  const handleProfileSave = async (event) => {
+    event.preventDefault();
+    setProfileError("");
+    setProfileMessage("");
+
+    const formData = new FormData();
+    formData.append("fullName", profileForm.fullName.trim());
+    formData.append("bio", profileForm.bio.trim());
+    if (avatarFile) {
+      formData.append("avatar", avatarFile);
+    }
+
+    try {
+      const response = await updateAdminProfileMutation.mutateAsync(formData);
+      setProfileMessage(response?.message || "Admin profile updated successfully");
+      setAvatarFile(null);
+      setAvatarPreview("");
+    } catch (error) {
+      setProfileError(error?.message || "Failed to update profile");
+    }
+  };
 
   const handleLogout = () => {
     const refreshToken = getStoredRefreshToken();
@@ -82,10 +145,67 @@ function AdminProfile() {
               </p>
             </div>
 
-            <div className="px-6 sm:px-8 py-6 grid grid-cols-1 lg:grid-cols-[auto,1fr] gap-5 items-start">
+            <div className="px-6 sm:px-8 py-6 grid grid-cols-1 xl:grid-cols-[auto,1fr] gap-6 items-start">
+              <form onSubmit={handleProfileSave} className="rounded-3xl border border-beige bg-background p-5 dark:border-light/20 dark:bg-background space-y-4">
+                <div className="flex items-center gap-4">
+                  <img
+                    src={avatarPreview || profileAvatar}
+                    alt={profile?.fullName || "Admin"}
+                    className="h-20 w-20 rounded-2xl object-cover border border-beige dark:border-light/20"
+                  />
+                  <div className="space-y-2">
+                    <label className="inline-flex cursor-pointer items-center rounded-xl border border-beige bg-light px-4 py-2 text-sm font-semibold text-dark hover:bg-gray-50 dark:border-light/20 dark:bg-background dark:text-light dark:hover:bg-background">
+                      Choose avatar
+                      <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                    </label>
+                    <p className="text-xs text-dark/60 dark:text-light/70">PNG, JPG, or WEBP up to 5MB.</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-dark dark:text-light mb-2">Full name</label>
+                  <input
+                    type="text"
+                    value={profileForm.fullName}
+                    onChange={(event) => setProfileForm((prev) => ({ ...prev, fullName: event.target.value }))}
+                    className="w-full rounded-xl border border-beige bg-light px-4 py-2.5 text-dark outline-none transition focus:border-primary dark:border-light/20 dark:bg-background dark:text-light"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-dark dark:text-light mb-2">Bio</label>
+                  <textarea
+                    rows={4}
+                    value={profileForm.bio}
+                    onChange={(event) => setProfileForm((prev) => ({ ...prev, bio: event.target.value }))}
+                    className="w-full rounded-xl border border-beige bg-light px-4 py-2.5 text-dark outline-none transition focus:border-primary dark:border-light/20 dark:bg-background dark:text-light"
+                  />
+                </div>
+
+                {(profileMessage || profileError) && (
+                  <div
+                    className={`rounded-xl px-4 py-3 text-sm font-medium ${
+                      profileError
+                        ? "border border-warning/30 bg-warning/10 text-warning"
+                        : "border border-secondary/30 bg-secondary/10 text-secondary"
+                    }`}
+                  >
+                    {profileError || profileMessage}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={updateAdminProfileMutation.isPending}
+                  className="inline-flex items-center rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                >
+                  {updateAdminProfileMutation.isPending ? "Saving..." : "Update Profile"}
+                </button>
+              </form>
+
               <div className="flex items-center gap-4">
                 <img
-                  src={getAvatarUrl(profile || currentUser)}
+                  src={profileAvatar}
                   alt={profile?.fullName || "Admin"}
                   className="h-20 w-20 rounded-2xl object-cover border border-beige dark:border-light/20"
                 />

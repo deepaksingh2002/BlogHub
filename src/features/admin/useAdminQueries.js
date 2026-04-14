@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminService } from "./adminApi";
+import { setAuthSession } from "../auth/authSlice";
+import { useDispatch } from "react-redux";
 
 const pickArray = (payload, candidates = []) => {
   for (const key of candidates) {
@@ -125,6 +127,9 @@ const useAdminMutation = (mutationFn) => {
   });
 };
 
+const extractUpdatedProfile = (payload) =>
+  payload?.data?.profile || payload?.profile || payload?.data || payload || null;
+
 export const useApproveAuthorApplicationMutation = () =>
   useAdminMutation(async (userId) => adminService.approveAuthorApplication(userId));
 
@@ -141,3 +146,20 @@ export const useDeleteAnyCommentMutation = () =>
 
 export const useDeleteUserMutation = () =>
   useAdminMutation(async (userId) => adminService.deleteUser(userId));
+
+export const useUpdateAdminProfileMutation = () => {
+  const dispatch = useDispatch();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (formData) => adminService.updateProfile(formData),
+    onSuccess: async (payload) => {
+      const updatedProfile = extractUpdatedProfile(payload);
+      if (updatedProfile) {
+        dispatch(setAuthSession({ user: updatedProfile }));
+      }
+
+      await queryClient.invalidateQueries({ queryKey: adminKeys.root });
+    },
+  });
+};

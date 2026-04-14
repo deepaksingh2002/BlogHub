@@ -63,6 +63,10 @@ adminApi.interceptors.response.use(
 export const adminService = {
   getDashboard: () => adminApi.get("/dashboard"),
   getProfile: () => adminApi.get("/profile"),
+  updateProfile: (data) =>
+    adminApi.patch("/profile", data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
   getUsers: (params = {}) => adminApi.get("/users", { params }),
   getUserProfile: (userId) => adminApi.get(`/users/${userId}`),
   getModerationLogs: () => adminApi.get("/moderation-logs"),
