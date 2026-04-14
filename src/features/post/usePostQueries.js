@@ -278,3 +278,19 @@ export const useToggleCommentLikeMutation = () => {
     },
   });
 };
+
+export const useReportPostMutation = () => {
+  return useMutation({
+    mutationFn: async ({ postId, reason }) => {
+      return postService.reportPost(postId, reason);
+    },
+  });
+};
+
+export const useReportCommentMutation = () => {
+  return useMutation({
+    mutationFn: async ({ commentId, reason }) => {
+      return commentService.reportComment(commentId, reason);
+    },
+  });
+};
