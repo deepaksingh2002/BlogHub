@@ -70,6 +70,7 @@ export const adminService = {
   getUsers: (params = {}) => adminApi.get("/users", { params }),
   getUserProfile: (userId) => adminApi.get(`/users/${userId}`),
   getModerationLogs: () => adminApi.get("/moderation-logs"),
+  getReports: () => adminApi.get("/reports"),
   getAuthorApplications: () => adminApi.get("/author-applications"),
   approveAuthorApplication: (userId) =>
     adminApi.patch(`/author-applications/${userId}/approve`),
