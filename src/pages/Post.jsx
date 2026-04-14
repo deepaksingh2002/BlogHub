@@ -13,6 +13,8 @@ import {
   useDeleteCommentMutation,
   usePostCommentsQuery,
   usePostQuery,
+  useReportCommentMutation,
+  useReportPostMutation,
   useToggleCommentLikeMutation,
   useTogglePostLikeMutation,
   useUpdateCommentMutation,
@@ -54,6 +56,8 @@ function Post() {
   const updateCommentMutation = useUpdateCommentMutation();
   const deleteCommentMutation = useDeleteCommentMutation();
   const toggleCommentLikeMutation = useToggleCommentLikeMutation();
+  const reportPostMutation = useReportPostMutation();
+  const reportCommentMutation = useReportCommentMutation();
 
   const currentUser = useSelector(selectAuthUser);
   const isAuthenticated = useSelector(selectIsAuthenticated);
@@ -69,6 +73,7 @@ function Post() {
   const [likePulse, setLikePulse] = useState(false);
   const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
   const [actionError, setActionError] = useState("");
+  const [actionMessage, setActionMessage] = useState("");
   const [copiedLink, setCopiedLink] = useState(false);
 
   const likesCount = getPostLikesCount(post);
@@ -188,6 +193,7 @@ function Post() {
       return;
     }
     setActionError("");
+    setActionMessage("");
     setIsLikeSubmitting(true);
     try {
       await togglePostLikeMutation.mutateAsync(post._id);
@@ -214,6 +220,7 @@ function Post() {
       return;
     }
     setActionError("");
+    setActionMessage("");
     setIsCommentSubmitting(true);
     try {
       const created = await createCommentMutation.mutateAsync({ postId: post?._id || postId, content });
@@ -272,6 +279,38 @@ function Post() {
       setTimeout(() => setCopiedLink(false), 1600);
     } catch {
       setActionError("Could not copy link.");
+    }
+  };
+
+  const handleReportPost = async () => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    setActionError("");
+    setActionMessage("");
+    try {
+      const response = await reportPostMutation.mutateAsync({ postId: post?._id || postId, reason: "" });
+      setActionMessage(response?.message || "Post reported successfully");
+    } catch (err) {
+      setActionError(err?.message || "Could not report post right now.");
+    }
+  };
+
+  const handleReportComment = async (commentId) => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    setActionError("");
+    setActionMessage("");
+    try {
+      const response = await reportCommentMutation.mutateAsync({ commentId, reason: "" });
+      setActionMessage(response?.message || "Comment reported successfully");
+    } catch (err) {
+      setActionError(err?.message || "Could not report comment right now.");
     }
   };
 
@@ -457,6 +496,14 @@ function Post() {
                     </svg>
                     {copiedLink ? "Copied" : "Copy Link"}
                   </button>
+                  <button
+                    type="button"
+                    onClick={handleReportPost}
+                    disabled={reportPostMutation.isPending}
+                    className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl text-sm font-semibold bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-60"
+                  >
+                    {reportPostMutation.isPending ? "Reporting..." : "Report Post"}
+                  </button>
                 </div>
 
               </div>
@@ -471,6 +518,11 @@ function Post() {
             {actionError && (
               <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
                 {actionError}
+              </div>
+            )}
+            {actionMessage && (
+              <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
+                {actionMessage}
               </div>
             )}
 
@@ -581,6 +633,19 @@ function Post() {
                           className="h-8 px-3 rounded-lg bg-red-500 text-white text-xs"
                         >
                           Delete
+                        </button>
+                      </div>
+                    )}
+
+                    {isAuthenticated && currentUserId !== comment.authorId && (
+                      <div className="mt-3 flex gap-2 justify-end">
+                        <button
+                          type="button"
+                          onClick={() => handleReportComment(comment.id)}
+                          disabled={reportCommentMutation.isPending}
+                          className="h-8 px-3 rounded-lg bg-amber-500 text-white text-xs disabled:opacity-60"
+                        >
+                          {reportCommentMutation.isPending ? "Reporting..." : "Report"}
                         </button>
                       </div>
                     )}
