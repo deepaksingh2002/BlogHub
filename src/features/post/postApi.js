@@ -84,6 +84,7 @@ export const postService = {
   getPostById: (postId) => postApi.get(`/get-post/${postId}`),
   updatePost: (postId, postData) => postApi.put(`/update-post/${postId}`, postData),
   deletePost: (postId) => postApi.delete(`/delete-post/${postId}`),
+  reportPost: (postId, reason = "") => postApi.post(`/${postId}/report`, { reason }),
   searchPosts: (query) => postApi.get("/search-post", { params: { q: query } }),
 };
 
@@ -112,6 +113,8 @@ export const commentService = {
     commentApi.patch(`/${commentId}`, { content }),
   deleteComment: (commentId) =>
     commentApi.delete(`/${commentId}`),
+  reportComment: (commentId, reason = "") =>
+    commentApi.post(`/${commentId}/report`, { reason }),
 };
 
 export default postApi;
