@@ -63,6 +63,13 @@ authorApi.interceptors.response.use(
 export const authorService = {
   getDashboard: () => authorApi.get("/dashboard"),
   getProfile: () => authorApi.get("/profile"),
+  updateProfile: (payload) =>
+    authorApi.patch("/profile", payload, {
+      headers:
+        payload instanceof FormData
+          ? { "Content-Type": "multipart/form-data" }
+          : undefined,
+    }),
   getManagedPosts: () => authorApi.get("/posts/manage"),
 };
 

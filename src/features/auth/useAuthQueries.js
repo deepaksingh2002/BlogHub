@@ -1,13 +1,19 @@
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { AuthService } from "./authApi";
 import {
   clearStoredAuthTokens,
   extractAuthTokens,
   setStoredAuthTokens,
 } from "./authSession";
-import { clearAuthSession, setAuthChecked, setAuthSession } from "./authSlice";
+import {
+  clearAuthSession,
+  selectAuthUser,
+  setAuthChecked,
+  setAuthSession,
+} from "./authSlice";
+import { authorService } from "../author/authorApi";
 
 const parseUser = (payload) => {
   if (!payload) return null;
@@ -34,6 +40,8 @@ const parseUser = (payload) => {
 
 const getStatusCode = (error) =>
   error?.response?.status || error?.statusCode || null;
+
+const isAuthorUser = (user) => String(user?.role || "").toLowerCase() === "author";
 
 export const useBootstrapCurrentUserQuery = (enabled = true) => {
   return useBootstrapCurrentUserQueryWithOptions(enabled, { clearOn401: true });
@@ -142,11 +150,17 @@ export const useForgotPasswordMutation = () =>
 
 export const useUserProfileQuery = (enabled = true) => {
   const dispatch = useDispatch();
+  const user = useSelector(selectAuthUser);
+  const useAuthorProfileEndpoint = isAuthorUser(user);
 
   const query = useQuery({
-    queryKey: ["auth", "profile"],
+    queryKey: ["auth", "profile", useAuthorProfileEndpoint ? "author" : "user"],
     enabled,
     queryFn: async () => {
+      if (useAuthorProfileEndpoint) {
+        return authorService.getProfile();
+      }
+
       const response = await AuthService.getUserProfile();
       return response.data;
     },
@@ -178,15 +192,51 @@ const createAuthMutation = (mutationFn) => {
   };
 };
 
-export const useUpdateUserProfileMutation = createAuthMutation(async (payload) => {
-  const response = await AuthService.updateUserProfile(null, payload);
-  return response.data;
-});
+export const useUpdateUserProfileMutation = () => {
+  const dispatch = useDispatch();
+  const user = useSelector(selectAuthUser);
 
-export const useUpdateUserAvatarMutation = createAuthMutation(async (formData) => {
-  const response = await AuthService.updateUserAvatar(null, formData);
-  return response.data;
-});
+  return useMutation({
+    mutationFn: async (payload) => {
+      if (isAuthorUser(user)) {
+        return authorService.updateProfile(payload);
+      }
+
+      const response = await AuthService.updateUserProfile(null, payload);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      const updatedUser = parseUser(data);
+      if (updatedUser) {
+        dispatch(setAuthSession({ user: updatedUser }));
+      }
+      setStoredAuthTokens(extractAuthTokens(data));
+    },
+  });
+};
+
+export const useUpdateUserAvatarMutation = () => {
+  const dispatch = useDispatch();
+  const user = useSelector(selectAuthUser);
+
+  return useMutation({
+    mutationFn: async (formData) => {
+      if (isAuthorUser(user)) {
+        return authorService.updateProfile(formData);
+      }
+
+      const response = await AuthService.updateUserAvatar(null, formData);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      const updatedUser = parseUser(data);
+      if (updatedUser) {
+        dispatch(setAuthSession({ user: updatedUser }));
+      }
+      setStoredAuthTokens(extractAuthTokens(data));
+    },
+  });
+};
 
 export const useChangePasswordMutation = () =>
   useMutation({
