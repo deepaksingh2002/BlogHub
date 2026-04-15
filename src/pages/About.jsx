@@ -137,9 +137,9 @@ function About() {
           <section className="rounded-[1.6rem] border border-beige bg-light shadow-[0_24px_60px_-40px_rgba(30,41,59,0.25)] dark:bg-background dark:border-light/20 overflow-hidden">
             <div className="px-6 sm:px-8 pt-6 sm:pt-8">
               <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 sm:gap-5">
-                <div className="w-full md:max-w-3xl text-center md:text-left">
+                <div className="w-full md:max-w-3xl text-center mx-auto">
                   {/* <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.18em] text-primary">Recruiter Profile</p> */}
-                  <h1 className="mt-2 text-3xl sm:text-5xl font-black text-dark dark:text-light">
+                  <h1 className="mt-2 text-3xl sm:text-5xl font-black text-dark dark:text-light text-center">
                     Deepak Singh
                   </h1>
                   <p className="mt-2 text-base sm:text-lg font-semibold text-primary dark:text-primary">Freelance MERN Stack Developer</p>

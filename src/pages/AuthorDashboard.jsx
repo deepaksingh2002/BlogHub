@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { HiOutlinePencilSquare, HiOutlineShieldExclamation } from "react-icons/hi2";
 import { Button, Container } from "../components";
+import StatCard from "../components/Admin/StatCard";
 import AdminTable from "../components/Admin/AdminTable";
 import { selectAuthUser } from "../features/auth/authSlice";
 import { useAuthorOverviewQuery } from "../features/author/useAuthorQueries";
@@ -124,16 +125,6 @@ function AuthorDashboard({ embedded = false }) {
     { key: "views", label: "Views", value: totalViews, color: "bg-aqua" },
     { key: "likes", label: "Likes", value: totalPostLikes, color: "bg-warning" },
   ];
-
-  const maxMetricValue = Math.max(
-    ...activityMetrics.map((item) => Number(item.value) || 0),
-    1
-  );
-
-  const followerChartRadius = 44;
-  const followerChartCircumference = 2 * Math.PI * followerChartRadius;
-  const authorFollowerStroke = followerChartCircumference * (followerBreakdown.total > 0 ? followerBreakdown.authors / followerBreakdown.total : 0);
-  const normalFollowerStroke = followerChartCircumference * (followerBreakdown.total > 0 ? followerBreakdown.users / followerBreakdown.total : 0);
   const activityUpdatedAt = new Date().toLocaleTimeString();
 
   const postColumns = [
@@ -219,195 +210,9 @@ function AuthorDashboard({ embedded = false }) {
 
   const content = (
     <div className="max-w-7xl mx-auto space-y-6">
-          <section className="rounded-[1.6rem] border border-beige bg-light shadow-lg dark:bg-background dark:border-light/20 overflow-hidden">
-            <div className="px-6 sm:px-8 py-6 sm:py-8 border-b border-beige dark:border-light/20 bg-background dark:bg-background">
-              <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.16em] text-primary">Author Center</p>
-              <h1 className="mt-2 text-3xl sm:text-4xl font-black text-dark dark:text-light">Content Dashboard</h1>
-              <p className="mt-2 text-sm sm:text-base text-dark/70 dark:text-light/80">
-                Welcome {profile?.fullName || profile?.name || user?.fullName || "Author"}. Manage your posts and track your publishing progress.
-              </p>
-            </div>
-
-            <div className="px-6 sm:px-8 py-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="rounded-2xl border border-beige bg-background p-4 dark:border-light/20 dark:bg-background">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-dark/70 dark:text-light/80">Content Performance</p>
-                  <span className="text-[11px] font-medium text-dark/55 dark:text-light/70">
-                    {contentPerformance.topPosts.length} ranked
-                  </span>
-                </div>
-                <p className="mt-2 text-xs leading-5 text-dark/60 dark:text-light/75">
-                  Ranked by combined likes and comments so you can quickly spot which posts resonate most.
-                </p>
-
-                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <div className="rounded-xl border border-beige bg-light/70 p-3 dark:border-light/15 dark:bg-light/5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-dark/55 dark:text-light/65">Avg likes</p>
-                    <p className="mt-1 text-2xl font-black text-dark dark:text-light">{Math.round(contentPerformance.averageLikes)}</p>
-                  </div>
-                  <div className="rounded-xl border border-beige bg-light/70 p-3 dark:border-light/15 dark:bg-light/5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-dark/55 dark:text-light/65">Avg comments</p>
-                    <p className="mt-1 text-2xl font-black text-dark dark:text-light">{Math.round(contentPerformance.averageComments)}</p>
-                  </div>
-                  <div className="rounded-xl border border-beige bg-light/70 p-3 dark:border-light/15 dark:bg-light/5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-dark/55 dark:text-light/65">Avg engagement</p>
-                    <p className="mt-1 text-2xl font-black text-dark dark:text-light">{Math.round(contentPerformance.averageScore)}</p>
-                  </div>
-                </div>
-
-                <div className="mt-4 space-y-3">
-                  {contentPerformance.topPosts.length > 0 ? (
-                    contentPerformance.topPosts.map((post) => {
-                      const maxScore = Math.max(contentPerformance.topPosts[0]?.score || 1, 1);
-                      const width = `${Math.max((post.score / maxScore) * 100, 8)}%`;
-
-                      return (
-                        <div key={post.id} className="space-y-2 rounded-xl border border-beige bg-light/60 p-3 dark:border-light/15 dark:bg-light/5">
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-dark dark:text-light">{post.title}</p>
-                              <p className="text-[11px] text-dark/55 dark:text-light/65">
-                                {post.likes} likes · {post.comments} comments
-                              </p>
-                            </div>
-                            <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary dark:bg-primary/15">
-                              {post.score}
-                            </span>
-                          </div>
-                          <div className="h-2 rounded-full bg-dark/10 dark:bg-light/10">
-                            <div className="h-2 rounded-full bg-primary" style={{ width }} />
-                          </div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="rounded-xl border border-dashed border-beige bg-light/60 p-4 text-sm text-dark/60 dark:border-light/15 dark:bg-light/5 dark:text-light/70">
-                      Publish a few posts to see your top performers here.
-                    </div>
-                  )}
-                </div>
-
-                {contentPerformance.topPost && (
-                  <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-3 text-sm text-dark dark:text-light dark:border-accent/30 dark:bg-accent/10">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">Best performer</p>
-                    <p className="mt-1 font-bold">{contentPerformance.topPost.title}</p>
-                    <p className="mt-1 text-xs text-dark/60 dark:text-light/75">
-                      {contentPerformance.topPost.score} total engagement points from likes and comments.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="rounded-2xl border border-beige bg-background p-4 dark:border-light/20 dark:bg-background">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-dark/70 dark:text-light/80">Activity Overview</p>
-                  <span className="text-[11px] font-medium text-dark/55 dark:text-light/70">
-                    Updated {activityUpdatedAt}
-                  </span>
-                </div>
-                <div className="mt-4 grid grid-cols-5 gap-2 items-end h-36">
-                  {activityMetrics.map((item) => {
-                    const height = `${Math.max((Number(item.value || 0) / maxMetricValue) * 100, 8)}%`;
-                    return (
-                      <div key={item.key} className="flex flex-col items-center gap-2 h-full justify-end">
-                        <span className="text-[11px] font-bold text-dark/75 dark:text-light/85">
-                          {Number(item.value || 0)}
-                        </span>
-                        <div
-                          className={`w-full rounded-md ${item.color}`}
-                          style={{ height }}
-                          title={`${item.label}: ${item.value}`}
-                        />
-                        <span className="text-[11px] font-semibold text-dark/70 dark:text-light/80 text-center">
-                          {item.label}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-beige bg-background p-4 dark:border-light/20 dark:bg-background">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-dark/70 dark:text-light/80">Follower Breakdown</p>
-                  <span className="text-[11px] font-medium text-dark/55 dark:text-light/70">
-                    {followerBreakdown.total}
-                  </span>
-                </div>
-
-                <div className="mt-4 flex items-center justify-center">
-                  <svg viewBox="0 0 120 120" className="h-36 w-36" role="img" aria-label="Follower breakdown by author and normal user chart">
-                    <circle cx="60" cy="60" r={followerChartRadius} fill="none" stroke="currentColor" className="text-dark/10 dark:text-light/15" strokeWidth="14" />
-                    <circle
-                      cx="60"
-                      cy="60"
-                      r={followerChartRadius}
-                      fill="none"
-                      stroke="currentColor"
-                      className="text-primary"
-                      strokeWidth="14"
-                      strokeDasharray={`${authorFollowerStroke} ${followerChartCircumference}`}
-                      transform="rotate(-90 60 60)"
-                      strokeLinecap="round"
-                    />
-                    <circle
-                      cx="60"
-                      cy="60"
-                      r={followerChartRadius}
-                      fill="none"
-                      stroke="currentColor"
-                      className="text-secondary"
-                      strokeWidth="14"
-                      strokeDasharray={`${normalFollowerStroke} ${followerChartCircumference}`}
-                      strokeDashoffset={-authorFollowerStroke}
-                      transform="rotate(-90 60 60)"
-                      strokeLinecap="round"
-                    />
-                    <text
-                      x="60"
-                      y="54"
-                      textAnchor="middle"
-                      className="fill-current text-dark dark:text-light"
-                      style={{ fontSize: "11px", fontWeight: 700 }}
-                    >
-                      {followerBreakdown.total}
-                    </text>
-                    <text
-                      x="60"
-                      y="68"
-                      textAnchor="middle"
-                      className="fill-current text-dark/70 dark:text-light/80"
-                      style={{ fontSize: "9px", fontWeight: 600 }}
-                    >
-                      followers
-                    </text>
-                  </svg>
-                </div>
-
-                <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-dark/70 dark:text-light/80">
-                  <span className="inline-flex items-center gap-1">
-                    <span className="h-2.5 w-2.5 rounded-full bg-primary" />
-                    Authors ({followerBreakdown.authors})
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <span className="h-2.5 w-2.5 rounded-full bg-secondary" />
-                    Users ({followerBreakdown.users})
-                  </span>
-                </div>
-              </div>
-
-            </div>
-          </section>
-
-          {error && (
-            <p className="rounded-xl border border-warning/25 bg-light px-4 py-3 text-sm font-medium text-warning dark:border-warning/35 dark:bg-background dark:text-warning">
-              {error}
-            </p>
-          )}
-
           <section className="rounded-3xl border border-beige bg-light p-5 sm:p-6 dark:bg-background dark:border-light/20">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-xl font-black text-dark dark:text-light">Managed Posts</h2>
+              <h2 className="text-xl font-black text-center text-dark dark:text-light">Managed Posts</h2>
               <Button
                 type="button"
                 onClick={() => navigate("/add-post")}
@@ -430,6 +235,102 @@ function AuthorDashboard({ embedded = false }) {
               />
             )}
           </section>
+
+          <section className="rounded-[1.6rem] border border-beige bg-light shadow-lg dark:bg-background dark:border-light/20 overflow-hidden">
+            <div className="px-6 sm:px-8 py-6 sm:py-8 border-b border-beige dark:border-light/20 bg-background dark:bg-background text-center">
+              <h1 className="text-3xl sm:text-4xl font-black text-primary dark:text-primary">Content Dashboard</h1>
+            </div>
+
+            <div className="px-6 sm:px-8 py-6 space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                <StatCard label="Posts" value={totalPosts} description="Published and draft posts combined." />
+                <StatCard label="Drafts" value={draftPosts} description="Posts still waiting to be published." />
+                <StatCard label="Views" value={totalViews} description="Total readership across your posts." />
+                <StatCard label="Likes" value={totalPostLikes} description="Combined audience reactions." />
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="rounded-3xl border border-beige bg-background p-5 dark:border-light/20 dark:bg-background">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-dark/70 dark:text-light/80">Top Posts</p>
+                      <p className="mt-1 text-xs text-dark/55 dark:text-light/65">Ranked by combined likes and comments.</p>
+                    </div>
+                    <span className="rounded-full border border-beige bg-light px-3 py-1 text-[11px] font-semibold text-dark/70 dark:border-light/20 dark:bg-background dark:text-light/80">
+                      {contentPerformance.topPosts.length} items
+                    </span>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    {contentPerformance.topPosts.length > 0 ? (
+                      contentPerformance.topPosts.map((post) => (
+                        <div key={post.id} className="rounded-2xl border border-beige bg-light px-4 py-3 dark:border-light/15 dark:bg-light/5">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-dark dark:text-light">{post.title}</p>
+                              <p className="text-[11px] text-dark/55 dark:text-light/65">
+                                {post.likes} likes · {post.comments} comments
+                              </p>
+                            </div>
+                            <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary dark:bg-primary/15">
+                              {post.score}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-beige bg-light/60 p-4 text-sm text-dark/60 dark:border-light/15 dark:bg-light/5 dark:text-light/70">
+                        Publish a few posts to see your top performers here.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-beige bg-background p-5 dark:border-light/20 dark:bg-background">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-dark/70 dark:text-light/80">Audience Snapshot</p>
+                      <p className="mt-1 text-xs text-dark/55 dark:text-light/65">A quick look at your follower mix.</p>
+                    </div>
+                    <span className="text-[11px] font-medium text-dark/55 dark:text-light/70">
+                      Updated {activityUpdatedAt}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="rounded-2xl border border-beige bg-light p-4 text-center dark:border-light/20 dark:bg-background">
+                      <p className="text-2xl font-black text-dark dark:text-light">{followerBreakdown.total}</p>
+                      <p className="mt-1 text-xs text-dark/60 dark:text-light/75">Total Followers</p>
+                    </div>
+                    <div className="rounded-2xl border border-beige bg-light p-4 text-center dark:border-light/20 dark:bg-background">
+                      <p className="text-2xl font-black text-dark dark:text-light">{followerBreakdown.authors}</p>
+                      <p className="mt-1 text-xs text-dark/60 dark:text-light/75">Authors</p>
+                    </div>
+                    <div className="rounded-2xl border border-beige bg-light p-4 text-center dark:border-light/20 dark:bg-background">
+                      <p className="text-2xl font-black text-dark dark:text-light">{followerBreakdown.users}</p>
+                      <p className="mt-1 text-xs text-dark/60 dark:text-light/75">Users</p>
+                    </div>
+                  </div>
+
+                  {contentPerformance.topPost && (
+                    <div className="mt-4 rounded-2xl border border-accent/20 bg-accent/5 p-4 text-sm text-dark dark:text-light dark:border-accent/30 dark:bg-accent/10">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">Best performer</p>
+                      <p className="mt-1 font-bold">{contentPerformance.topPost.title}</p>
+                      <p className="mt-1 text-xs text-dark/60 dark:text-light/75">
+                        {contentPerformance.topPost.score} total engagement points.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {error && (
+            <p className="rounded-xl border border-warning/25 bg-light px-4 py-3 text-sm font-medium text-warning dark:border-warning/35 dark:bg-background dark:text-warning">
+              {error}
+            </p>
+          )}
         </div>
   );
 

@@ -95,10 +95,10 @@ function Header({ isDarkMode, onToggleTheme }) {
   }, []);
 
   return (
-    <header className="py-3 mb-4 shadow-lg bg-primary text-light w-full z-100 fixed top-0 left-0 right-0 border-b border-light/20">
+    <header className="fixed top-0 left-0 right-0 z-100 w-full bg-gradient-to-r from-primary via-primary to-primary text-light shadow-lg border-b border-light/20">
       <Container>
         {/* Desktop layout (md and above) */}
-        <div className="hidden md:flex items-center justify-between gap-4">
+        <div className="hidden md:flex items-center justify-between gap-4 py-3">
           <Link to="/" className="shrink-0 h-11 w-11 border-2 border-light rounded-xl flex items-center justify-center bg-light/10">
             <Logo width="40px" />
           </Link>
@@ -178,7 +178,7 @@ function Header({ isDarkMode, onToggleTheme }) {
         </div>
 
         {/* Mobile layout (below md) */}
-        <div className="md:hidden px-2 w-full">
+        <div className="md:hidden px-2 py-3 w-full">
           <div className="flex items-center gap-2 w-full min-w-0">
             <Link to="/" className="h-11 w-11 border-2 border-light rounded-xl bg-light/10 hover:bg-light/20 hover:scale-[1.02] transition-all flex items-center justify-center shrink-0">
               <Logo width="28px" />

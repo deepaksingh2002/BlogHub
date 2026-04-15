@@ -5,7 +5,7 @@ const getDisplayName = (user) => user?.fullName || user?.username || user?.email
 const getAvatarUrl = (user) =>
   user?.avatar?.url || user?.avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
-function AdminUsersPanel({ title = "Users", users = [], loading = false, viewAllTo = "/admin/users" }) {
+function AdminUsersPanel({ title = "Users", users = [], loading = false, viewAllTo = "/admin/dashboard#admin-users-section" }) {
   return (
     <article className="rounded-3xl border border-beige bg-light p-5 sm:p-6 dark:bg-background dark:border-light/20">
       <div className="flex items-center justify-between gap-3">

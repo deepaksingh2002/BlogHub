@@ -12,7 +12,6 @@ import Search from './pages/Search.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
 import About from './pages/About.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
-import AdminUsers from './pages/AdminUsers.jsx';
 import AdminUserProfile from './pages/AdminUserProfile.jsx';
 import AuthorDashboard from './pages/AuthorDashboard.jsx';
 import Authors from './pages/Authors.jsx';
@@ -110,14 +109,6 @@ const router = createBrowserRouter([
         element: (
           <AuthLayout authentication allowedRoles={["admin", "superadmin"]}>
             <AdminDashboard />
-          </AuthLayout>
-        ),
-      },
-      {
-        path: "/admin/users",
-        element: (
-          <AuthLayout authentication allowedRoles={["admin", "superadmin"]}>
-            <AdminUsers />
           </AuthLayout>
         ),
       },

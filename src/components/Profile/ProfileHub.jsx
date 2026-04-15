@@ -7,6 +7,7 @@ import AdminUsersPanel from "../Admin/AdminUsersPanel";
 import ChangePasswordForm from "./ChangePasswordForm";
 import ManagedPostsSection from "./ManagedPostsSection";
 import ProfileDetailsForm from "./ProfileDetailsForm";
+import SubscriberConnections from "./SubscriberConnections";
 import AuthorDashboard from "../../pages/AuthorDashboard";
 import { clearAuthSession, selectAuthUser } from "../../features/auth/authSlice";
 import { clearStoredAuthTokens, getStoredRefreshToken } from "../../features/auth/authSession";
@@ -20,6 +21,7 @@ import {
 } from "../../features/auth/useAuthQueries";
 import { useAdminOverviewQuery, useAdminUsersQuery, useUpdateAdminProfileMutation } from "../../features/admin/useAdminQueries";
 import { useDeletePostMutation, usePostsQuery } from "../../features/post/usePostQueries";
+import { useAuthorsListQuery, useFollowersListQuery } from "../../features/subscription/useSubscriptionQueries";
 import { isVerifiedAuthor } from "../../utils/postHelpers";
 import { hasRole } from "../../utils/roleHelpers";
 
@@ -91,9 +93,15 @@ function UserProfileView({ user, loading, navigate, dispatch, logoutMutation, up
   const [authorApplyStatus, setAuthorApplyStatus] = useState("");
   const [authorApplyError, setAuthorApplyError] = useState("");
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isConnectionsModalOpen, setIsConnectionsModalOpen] = useState(false);
+  const [connectionsSearch, setConnectionsSearch] = useState("");
   const [profileUpdateMessage, setProfileUpdateMessage] = useState("");
   const [profileUpdateError, setProfileUpdateError] = useState("");
   const [updateModalTab, setUpdateModalTab] = useState("profile");
+
+  const currentUserId = getUserId(user);
+  const authorsQuery = useAuthorsListQuery(Boolean(user));
+  const followersQuery = useFollowersListQuery(currentUserId, Boolean(currentUserId));
 
   useEffect(() => {
     if (!user) return;
@@ -252,6 +260,16 @@ function UserProfileView({ user, loading, navigate, dispatch, logoutMutation, up
     }
   };
 
+  const following = useMemo(() => {
+    const authors = Array.isArray(authorsQuery.data) ? authorsQuery.data : [];
+    return authors.filter((author) => {
+      const role = String(author?.role || "").toLowerCase();
+      return role === "author" && Boolean(author?.isFollowing);
+    });
+  }, [authorsQuery.data]);
+
+  const followers = useMemo(() => Array.isArray(followersQuery.data) ? followersQuery.data : [], [followersQuery.data]);
+
   if (!user) {
     return (
       <ProfileUnavailable
@@ -313,12 +331,13 @@ function UserProfileView({ user, loading, navigate, dispatch, logoutMutation, up
                     </div>
                   </div>
                 </div>
-                <Link
-                  to="/profile/connections"
+                <button
+                  type="button"
+                  onClick={() => setIsConnectionsModalOpen(true)}
                   className="mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-primary px-5 py-3.5 text-base font-bold text-white shadow-sm hover:opacity-90"
                 >
                   Connections
-                </Link>
+                </button>
               </div>
             </div>
 
@@ -441,6 +460,37 @@ function UserProfileView({ user, loading, navigate, dispatch, logoutMutation, up
                     {profileUpdateError}
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {isConnectionsModalOpen && (
+            <div className="fixed inset-0 z-120 grid place-items-center bg-dark/65 p-4" role="dialog" aria-modal="true">
+              <div className="w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-3xl border border-beige bg-light p-5 sm:p-6 shadow-2xl dark:border-light/20 dark:bg-background">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-center flex-1 text-xl sm:text-2xl font-black text-dark dark:text-light">Connections</h2>
+                  <button
+                    type="button"
+                    onClick={() => setIsConnectionsModalOpen(false)}
+                    className="rounded-lg border border-beige px-3 py-1.5 text-sm font-semibold text-dark hover:bg-background dark:border-light/20 dark:text-light dark:hover:bg-background"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                <div className="mt-4">
+                  <input
+                    type="search"
+                    placeholder="Search connections"
+                    value={connectionsSearch}
+                    onChange={(event) => setConnectionsSearch(event.target.value)}
+                    className="w-full rounded-2xl border border-beige bg-background px-4 py-3 text-sm text-dark outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-light/20 dark:bg-background dark:text-light"
+                  />
+                </div>
+
+                <div className="mt-5">
+                  <SubscriberConnections following={following} followers={followers} searchTerm={connectionsSearch} />
+                </div>
               </div>
             </div>
           )}
@@ -606,7 +656,6 @@ function AdminProfileView({ currentUser, logoutMutation, updateAdminProfileMutat
   );
 
   const profile = overviewQuery.data?.profile || {};
-  const stats = overviewQuery.data?.stats || {};
   const profileAvatar =
     profile?.avatar?.url || profile?.avatar || currentUser?.avatar?.url || currentUser?.avatar || DEFAULT_AVATAR;
 
@@ -713,46 +762,64 @@ function AdminProfileView({ currentUser, logoutMutation, updateAdminProfileMutat
     <div className="min-h-screen pt-28 md:pt-32 pb-12 bg-background dark:bg-background">
       <Container>
         <div className="max-w-7xl mx-auto space-y-6">
-          <section className="rounded-[1.6rem] border border-beige bg-light shadow-[0_24px_60px_-40px_rgba(30,41,59,0.25)] dark:bg-background dark:border-light/20 overflow-hidden">
-            <div className="px-6 sm:px-8 py-6 sm:py-8 border-b border-beige dark:border-light/20 bg-background dark:bg-background">
-              <h1 className="text-3xl sm:text-4xl font-black text-primary text-center">Welcome to Admin</h1>
-            </div>
-
-            <div className="px-6 sm:px-8 py-6 grid grid-cols-1 xl:grid-cols-[auto,1fr] gap-6 items-start">
-              <div className="flex items-center gap-4">
+          <section className="rounded-3xl border border-beige bg-light shadow-xl p-5 sm:p-6 md:p-8 dark:bg-background dark:border-light/20">
+            <div className="flex flex-col xl:flex-row gap-6 xl:items-center xl:justify-between">
+              <div className="flex items-center gap-4 sm:gap-5 md:gap-6 min-w-0">
                 <img
                   src={profileAvatar}
                   alt={profile?.fullName || "Admin"}
-                  className="h-20 w-20 rounded-2xl object-cover border border-beige dark:border-light/20"
+                  className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-2xl object-cover border-2 border-beige dark:border-light/20 shadow-md"
                 />
-                <div>
-                  <p className="text-xl font-black text-dark dark:text-light">{profile?.fullName || currentUser?.fullName || "Administrator"}</p>
-                  <p className="text-sm text-dark/70 dark:text-light/80">@{profile?.username || currentUser?.username || "admin"}</p>
+                <div className="min-w-0">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-dark dark:text-light truncate">
+                    {profile?.fullName || currentUser?.fullName || "Administrator"}
+                  </h1>
+                  <p className="text-dark/70 mt-1 text-sm sm:text-base truncate dark:text-light/80">
+                    @{profile?.username || currentUser?.username || "admin"}
+                  </p>
+                  <p className="text-sm text-dark/60 mt-2 leading-relaxed dark:text-light/70 max-w-2xl">
+                    {profile?.bio || currentUser?.bio || "Welcome to Admin. Manage platform users, content, and moderation from this dashboard."}
+                  </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="rounded-2xl border border-beige bg-background px-4 py-3 dark:bg-background dark:border-light/20">
-                  <p className="text-xs text-dark/70 dark:text-light/80">Users</p>
-                  <p className="mt-1 text-2xl font-black text-dark dark:text-light">{Number(stats?.users?.total || 0)}</p>
-                </div>
-                <div className="rounded-2xl border border-beige bg-background px-4 py-3 dark:bg-background dark:border-light/20">
-                  <p className="text-xs text-dark/70 dark:text-light/80">Posts</p>
-                  <p className="mt-1 text-2xl font-black text-dark dark:text-light">{Number(stats?.posts?.totalPosts || 0)}</p>
-                </div>
-                <div className="rounded-2xl border border-beige bg-background px-4 py-3 dark:bg-background dark:border-light/20">
-                  <p className="text-xs text-dark/70 dark:text-light/80">Comments</p>
-                  <p className="mt-1 text-2xl font-black text-dark dark:text-light">{Number(stats?.engagement?.comments || 0)}</p>
-                </div>
-                <div className="rounded-2xl border border-beige bg-background px-4 py-3 dark:bg-background dark:border-light/20">
-                  <p className="text-xs text-dark/70 dark:text-light/80">Pending Authors</p>
-                  <p className="mt-1 text-2xl font-black text-dark dark:text-light">{Number(stats?.users?.pendingAuthorApplications || 0)}</p>
+              <div className="w-full xl:w-auto">
+                <div className="rounded-2xl bg-background border border-beige px-4 py-4 dark:bg-background dark:border-light/20">
+                  <div className="grid grid-cols-2 gap-3 min-w-0">
+                    <button
+                      type="button"
+                      onClick={openEditModal}
+                      className="h-10 px-4 inline-flex items-center justify-center rounded-xl bg-primary text-light text-sm font-semibold hover:opacity-90"
+                    >
+                      Edit Profile
+                    </button>
+                    <Link
+                      to="/admin/dashboard"
+                      className="h-10 px-4 inline-flex items-center justify-center rounded-xl border border-beige bg-background text-sm font-semibold text-dark hover:bg-light dark:border-light/20 dark:bg-background dark:text-light dark:hover:bg-background"
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
+                      to="/admin/dashboard#admin-users-section"
+                      className="h-10 px-4 inline-flex items-center justify-center rounded-xl bg-primary text-light text-sm font-semibold hover:opacity-90"
+                    >
+                      Users
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      disabled={logoutMutation.isPending}
+                      className="h-10 px-4 inline-flex items-center justify-center rounded-xl bg-warning text-light text-sm font-semibold hover:bg-warning/90 disabled:opacity-60"
+                    >
+                      {logoutMutation.isPending ? "Logging out..." : "Logout"}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
 
             {(profileMessage || profileError) && (
-              <div className="px-6 sm:px-8 pb-2">
+              <div className="mt-4">
                 <div
                   className={`rounded-xl px-4 py-3 text-sm font-medium ${
                     profileError
@@ -765,42 +832,6 @@ function AdminProfileView({ currentUser, logoutMutation, updateAdminProfileMutat
               </div>
             )}
 
-            <div className="px-6 sm:px-8 pb-6 flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={openEditModal}
-                className="inline-flex items-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
-              >
-                Edit Profile
-              </button>
-              <Link
-                to="/admin/dashboard"
-                className="inline-flex items-center rounded-xl border border-beige bg-background px-4 py-2 text-sm font-semibold text-dark hover:bg-light dark:border-light/20 dark:bg-background dark:text-light dark:hover:bg-background"
-              >
-                Open Dashboard
-              </Link>
-              <Link
-                to="/admin/users"
-                className="inline-flex items-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
-              >
-                Manage Users
-              </Link>
-              <button
-                type="button"
-                onClick={() => navigate("/admin/dashboard")}
-                className="inline-flex items-center rounded-xl border border-beige bg-background px-4 py-2 text-sm font-semibold text-dark hover:bg-light dark:border-light/20 dark:bg-background dark:text-light dark:hover:bg-background"
-              >
-                Go to Moderation
-              </button>
-              <button
-                type="button"
-                onClick={handleLogout}
-                disabled={logoutMutation.isPending}
-                className="inline-flex items-center rounded-xl bg-warning px-4 py-2 text-sm font-semibold text-white hover:bg-warning/90 disabled:opacity-60"
-              >
-                {logoutMutation.isPending ? "Logging out..." : "Logout"}
-              </button>
-            </div>
           </section>
 
           {isEditModalOpen && (
@@ -887,13 +918,13 @@ function AdminProfileView({ currentUser, logoutMutation, updateAdminProfileMutat
               title="Recent Users"
               users={usersQuery.data?.users || []}
               loading={usersQuery.isLoading || usersQuery.isFetching}
-              viewAllTo="/admin/users"
+              viewAllTo="/admin/dashboard#admin-users-section"
             />
             <AdminUsersPanel
               title="Recent Authors"
               users={authorsQuery.data?.users || []}
               loading={authorsQuery.isLoading || authorsQuery.isFetching}
-              viewAllTo="/admin/users"
+              viewAllTo="/admin/dashboard#admin-users-section"
             />
           </section>
         </div>

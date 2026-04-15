@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { HiCheckBadge } from "react-icons/hi2";
 import { useSelector } from "react-redux";
 import { useSearchParams } from "react-router-dom";
@@ -22,11 +22,25 @@ function Authors() {
   const focusedAuthorId = searchParams.get("focus") || "";
   const currentUser = useSelector(selectAuthUser);
   const currentUserId = currentUser?._id || currentUser?.id || currentUser?.userId || null;
+  const [searchTerm, setSearchTerm] = useState("");
 
   const authorsQuery = useAuthorsListQuery(true);
   const followMutation = useToggleFollowMutation();
 
   const authors = authorsQuery.data || [];
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+
+  const filteredAuthors = useMemo(() => {
+    if (!normalizedSearch) return authors;
+
+    return authors.filter((author) => {
+      const haystack = [author?.fullName, author?.username, author?.bio, author?.email]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(normalizedSearch);
+    });
+  }, [authors, normalizedSearch]);
 
   const handleToggleFollow = async (authorId) => {
     if (!authorId) return;
@@ -51,10 +65,13 @@ function Authors() {
       <Container>
         <section className="max-w-6xl mx-auto">
           <div className="mb-6">
-            <h1 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-slate-100">Authors</h1>
-            <p className="mt-2 text-sm md:text-base text-gray-600 dark:text-slate-300">
-              Discover creators and follow your favorite authors.
-            </p>
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search authors"
+              className="w-full max-w-2xl mx-auto block rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            />
           </div>
 
           {authorsQuery.isLoading ? (
@@ -67,13 +84,13 @@ function Authors() {
             <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300">
               {authorsQuery.error?.message || "Could not load authors right now."}
             </div>
-          ) : authors.length === 0 ? (
+          ) : filteredAuthors.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center text-gray-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
               No authors found.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {authors.map((author) => {
+              {filteredAuthors.map((author) => {
                 const authorId = author?._id || author?.id;
                 const isSelf = currentUserId && String(currentUserId) === String(authorId);
                 const isFollowing = Boolean(author?.isFollowing);

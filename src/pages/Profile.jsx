@@ -222,7 +222,7 @@ function Profile() {
       <div className="min-h-screen pt-32 pb-16 bg-background dark:bg-background">
         <Container>
           <div className="max-w-xl mx-auto bg-light rounded-2xl shadow-md border border-beige p-8 text-center dark:bg-background dark:border-light/20">
-            <h2 className="text-2xl font-bold text-dark dark:text-light">Profile not available</h2>
+            <h2 className="text-2xl font-bold text-center text-dark dark:text-light">Profile not available</h2>
             <p className="text-dark/70 mt-2 dark:text-light/80">Please login again to view your profile.</p>
             <button
               onClick={() => navigate("/login")}
@@ -256,7 +256,7 @@ function Profile() {
                 </div>
 
                 <div className="min-w-0">
-                  <h1 className="inline-flex items-center gap-2 text-2xl sm:text-3xl md:text-4xl font-black text-dark dark:text-light truncate">
+                  <h1 className="inline-flex w-full items-center justify-center gap-2 text-2xl sm:text-3xl md:text-4xl font-black text-dark dark:text-light truncate text-center">
                     <span className="truncate">{getDisplayName(user)}</span>
                     {isProfileVerified && (
                       <HiCheckBadge className="h-6 w-6 text-primary shrink-0" title="Verified author" />

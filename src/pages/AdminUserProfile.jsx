@@ -39,7 +39,7 @@ function AdminUserProfile() {
 
     try {
       await deleteUserMutation.mutateAsync(profile._id);
-      navigate("/admin/users");
+      navigate("/admin/dashboard#admin-users-section");
     } catch (error) {
       if (error?.statusCode === 401) {
         navigate("/login");
@@ -53,7 +53,7 @@ function AdminUserProfile() {
         <div className="max-w-6xl mx-auto space-y-6">
           <div className="flex items-center justify-between gap-3">
             <Link
-              to="/admin/users"
+              to="/admin/dashboard#admin-users-section"
               className="inline-flex items-center gap-2 rounded-xl border border-beige bg-light px-4 py-2 text-sm font-semibold text-dark hover:bg-background dark:border-light/20 dark:bg-background dark:text-light dark:hover:bg-background"
             >
               <HiOutlineArrowLeft className="h-4 w-4" />
@@ -90,7 +90,7 @@ function AdminUserProfile() {
                 <div className="min-w-0 space-y-3">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">User Profile</p>
-                    <h1 className="mt-2 text-3xl sm:text-4xl font-black text-dark dark:text-light truncate">
+                    <h1 className="mt-2 text-3xl sm:text-4xl font-black text-dark dark:text-light truncate text-center lg:text-left">
                       {getDisplayName(profile)}
                     </h1>
                     <p className="mt-1 text-sm sm:text-base text-dark/70 dark:text-light/80 truncate">
@@ -141,7 +141,7 @@ function AdminUserProfile() {
           </section>
 
           <section className="rounded-[1.6rem] border border-beige bg-light p-6 sm:p-8 shadow-[0_24px_60px_-40px_rgba(30,41,59,0.25)] dark:bg-background dark:border-light/20">
-            <h2 className="text-2xl font-black text-dark dark:text-light">Recent Posts</h2>
+            <h2 className="text-2xl font-black text-center text-dark dark:text-light">Recent Posts</h2>
             <p className="mt-1 text-sm text-dark/70 dark:text-light/80">Latest posts from this account.</p>
 
             <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

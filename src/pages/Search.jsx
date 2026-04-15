@@ -15,7 +15,7 @@ function Search() {
   return (
     <div className="py-32 min-h-screen bg-background dark:bg-background">
       <Container>
-        <h1 className="text-3xl font-bold mb-8 text-dark dark:text-dark">
+        <h1 className="text-3xl font-bold mb-8 text-center text-dark dark:text-dark">
           Search Results {query ? `for "${query}"` : ""}
         </h1>
         {!query ? (
