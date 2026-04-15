@@ -131,30 +131,30 @@ function About() {
   };
 
   return (
-    <div className="min-h-screen pt-32 pb-16 bg-background dark:bg-background">
+    <div className="min-h-screen pt-28 md:pt-32 pb-16 bg-background dark:bg-background">
       <Container>
         <div className="max-w-6xl mx-auto space-y-6">
           <section className="rounded-[1.6rem] border border-beige bg-light shadow-[0_24px_60px_-40px_rgba(30,41,59,0.25)] dark:bg-background dark:border-light/20 overflow-hidden">
             <div className="px-6 sm:px-8 pt-6 sm:pt-8">
-              <div className="flex items-start justify-between gap-4">
-                <div>
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 sm:gap-5">
+                <div className="w-full md:max-w-3xl text-center md:text-left">
                   {/* <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.18em] text-primary">Recruiter Profile</p> */}
                   <h1 className="mt-2 text-3xl sm:text-5xl font-black text-dark dark:text-light">
                     Deepak Singh
                   </h1>
                   <p className="mt-2 text-base sm:text-lg font-semibold text-primary dark:text-primary">Freelance MERN Stack Developer</p>
-                  <p className="mt-2 max-w-3xl text-sm sm:text-base leading-relaxed text-dark/80 dark:text-light/80">
+                  <p className="mt-2 max-w-3xl mx-auto md:mx-0 text-sm sm:text-base leading-relaxed text-dark/80 dark:text-light/80">
                     I am actively seeking freelance opportunities for modern web development projects. I build scalable full-stack applications with MongoDB, Express, React, and Node.js, and I focus on clean UI, secure APIs, and reliable delivery.
                   </p>
                 </div>
-                <span className="shrink-0 inline-flex items-center rounded-full border border-beige bg-background px-3 py-1 text-xs font-semibold text-dark/80 dark:bg-background dark:border-light/20 dark:text-light/80">
+                <span className="shrink-0 inline-flex items-center justify-center self-center md:self-start rounded-full border border-beige bg-background px-3 py-1 text-xs font-semibold text-dark/80 dark:bg-background dark:border-light/20 dark:text-light/80">
                   Available for Freelance Work
                 </span>
               </div>
             </div>
 
             <div className="mt-5 border-t border-beige bg-background px-6 sm:px-8 py-3 dark:bg-background dark:border-light/20">
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs sm:text-sm text-dark/80 dark:text-light/80">
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-6 gap-y-2 text-xs sm:text-sm text-dark/80 dark:text-light/80 text-center md:text-left">
                 <span>{`Contact me:`}</span>
                 <span>{`✉  deepakksingh1202@gmail.com`}</span>
               </div>
@@ -192,12 +192,12 @@ function About() {
             </div>
 
             <div className="border-t border-beige bg-background px-6 sm:px-8 py-4 dark:bg-background dark:border-light/20">
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
                 <a
                   href={previewUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center rounded-xl border border-beige bg-background px-4 py-2 text-sm font-semibold text-dark hover:bg-light dark:bg-background dark:border-light/20 dark:text-light dark:hover:bg-background"
+                  className="inline-flex w-full sm:w-auto justify-center items-center rounded-xl border border-beige bg-background px-4 py-2 text-sm font-semibold text-dark hover:bg-light dark:bg-background dark:border-light/20 dark:text-light dark:hover:bg-background"
                 >
                   Open Preview
                 </a>
@@ -205,14 +205,14 @@ function About() {
                   href={downloadUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90"
+                  className="inline-flex w-full sm:w-auto justify-center items-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90"
                 >
                   Download PDF
                 </a>
 
                 {isAuthenticated && canManageResume && (
                   <>
-                    <label className="inline-flex cursor-pointer items-center rounded-xl border border-beige bg-background px-4 py-2 text-sm font-semibold text-dark hover:bg-light dark:bg-background dark:border-light/20 dark:text-light dark:hover:bg-background">
+                    <label className="inline-flex w-full sm:w-auto justify-center cursor-pointer items-center rounded-xl border border-beige bg-background px-4 py-2 text-sm font-semibold text-dark hover:bg-light dark:bg-background dark:border-light/20 dark:text-light dark:hover:bg-background">
                       <input
                         type="file"
                         accept="application/pdf,.pdf"
@@ -226,7 +226,7 @@ function About() {
                       type="button"
                       onClick={handleDeleteResume}
                       disabled={uploading || deleting}
-                      className="inline-flex items-center rounded-xl border border-warning/30 bg-light px-4 py-2 text-sm font-semibold text-warning hover:bg-background disabled:opacity-60 dark:border-warning/40 dark:bg-background dark:text-warning dark:hover:bg-background"
+                      className="inline-flex w-full sm:w-auto justify-center items-center rounded-xl border border-warning/30 bg-light px-4 py-2 text-sm font-semibold text-warning hover:bg-background disabled:opacity-60 dark:border-warning/40 dark:bg-background dark:text-warning dark:hover:bg-background"
                     >
                       {deleting ? "Deleting..." : "Delete PDF"}
                     </button>

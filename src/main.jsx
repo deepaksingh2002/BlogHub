@@ -6,14 +6,12 @@ import AllPosts from './pages/AllPosts.jsx';
 import Post from './pages/Post.jsx';
 import AddPost from './pages/AddPost.jsx';
 import EditPost from './pages/EditPost.jsx';
-import Profile from './pages/Profile.jsx';
+import ProfileHub from './components/Profile/ProfileHub.jsx';
 import SubscriberConnectionsPage from './pages/SubscriberConnectionsPage.jsx';
-import ProfileSettings from './pages/ProfileSettings.jsx';
 import Search from './pages/Search.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
 import About from './pages/About.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
-import AdminProfile from './pages/AdminProfile.jsx';
 import AdminUsers from './pages/AdminUsers.jsx';
 import AdminUserProfile from './pages/AdminUserProfile.jsx';
 import AuthorDashboard from './pages/AuthorDashboard.jsx';
@@ -79,7 +77,7 @@ const router = createBrowserRouter([
         path: "/profile",
         element: (
           <AuthLayout authentication>
-            <Profile />
+            <ProfileHub mode="profile" />
           </AuthLayout>
         ),
       },
@@ -87,7 +85,7 @@ const router = createBrowserRouter([
         path: "/profile/settings",
         element: (
           <AuthLayout authentication>
-            <ProfileSettings />
+            <ProfileHub mode="settings" />
           </AuthLayout>
         ),
       },
@@ -103,7 +101,7 @@ const router = createBrowserRouter([
         path: "/admin/profile",
         element: (
           <AuthLayout authentication allowedRoles={["admin", "superadmin"]}>
-            <AdminProfile />
+            <ProfileHub mode="admin" />
           </AuthLayout>
         ),
       },

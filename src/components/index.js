@@ -14,7 +14,6 @@ import PostForm from './PostForm/PostForm';
 import PostCard from './PostCard';
 import PostListCard from './PostListCard';
 import AuthLayout from './AuthLayout';
-import Profile from "../pages/Profile";
 import LoadingAnimation from "./Animation/LoadingAnimation";
 
 export {
@@ -34,6 +33,5 @@ export {
     PostCard,
     PostListCard,
     AuthLayout,
-    Profile,
     LoadingAnimation
 }
