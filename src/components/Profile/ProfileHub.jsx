@@ -191,8 +191,15 @@ function UserProfileView({ user, loading, navigate, dispatch, logoutMutation, up
     const refreshToken = getStoredRefreshToken();
     dispatch(clearAuthSession());
     clearStoredAuthTokens();
-    navigate("/", { replace: true });
-    logoutMutation.mutate({ refreshToken });
+    logoutMutation.mutate(
+      { refreshToken },
+      {
+        onSettled: () => {
+          navigate("/", { replace: true });
+          window.location.reload(); // Force full reload to clear all state
+        },
+      }
+    );
   };
 
   const handleApplyForAuthor = async () => {
