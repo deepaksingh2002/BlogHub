@@ -18,6 +18,15 @@ import { authorService } from "../author/authorApi";
 const parseUser = (payload) => {
   if (!payload) return null;
 
+  // If payload looks like a user object (has _id, email, username), return as is
+  if (
+    typeof payload === "object" &&
+    (payload._id || payload.id) &&
+    (payload.email || payload.username || payload.fullName)
+  ) {
+    return payload;
+  }
+
   return (
     payload.user ||
     payload.currentUser ||
